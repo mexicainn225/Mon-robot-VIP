@@ -1,13 +1,26 @@
-
 import os
 import logging
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
+from flask import Flask
+from threading import Thread
 
-# On récupère le token depuis les variables d'environnement de Render
+# 1. Petit serveur web pour rendre Render "heureux" (Hébergement gratuit)
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Le robot est en ligne !"
+
+def run_web():
+    app.run(host='0.0.0.0', port=10000)
+
+# Lancement du serveur web en arrière-plan
+Thread(target=run_web).start()
+
+# 2. Configuration du bot Telegram
 TOKEN = os.environ.get("TOKEN")
 
-# Configuration des logs pour voir ce qui se passe sur Render
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -19,12 +32,13 @@ async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 if __name__ == '__main__':
     if not TOKEN:
-        print("Erreur : Le token n'est pas configuré dans les variables d'environnement !")
+        print("Erreur : Le token n'est pas configuré !")
     else:
-        app = ApplicationBuilder().token(TOKEN).build()
+        # Initialisation du bot
+        bot_app = ApplicationBuilder().token(TOKEN).build()
         
         # Ce filtre écoute les clics provenant de ta Mini App
-        app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_data))
+        bot_app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_data))
         
         print("Le bot est en ligne et prêt à recevoir les signaux !")
-        app.run_polling()
+        bot_app.run_polling()
