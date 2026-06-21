@@ -6,33 +6,29 @@
     <title>PLATEFORME VIP</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: #0e1015; color: #ffffff; padding: 16px; min-height: 100vh; }
-        .games-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        /* --- DESIGN GLOBAL --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
+        body { background-color: #0e1015; color: #ffffff; padding: 16px; min-height: 100vh; display: flex; flex-direction: column; }
+        
+        /* --- GRILLE DES JEUX --- */
+        .games-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
         .game-card { border-radius: 14px; aspect-ratio: 1 / 1.4; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 10px; cursor: pointer; background-size: cover; background-position: center; background-color: #151822; font-size: 10px; font-weight: bold; text-transform: uppercase; text-align: center; }
         
-        /* Utilisation correcte des chemins static */
-        .g164 { background-image: url("{{ url_for('static', filename='IMG_0164.WEBP') }}"); }
-        .g165 { background-image: url("{{ url_for('static', filename='IMG_0165.WEBP') }}"); }
-        .g166 { background-image: url("{{ url_for('static', filename='IMG_0166.WEBP') }}"); }
-        .g167 { background-image: url("{{ url_for('static', filename='IMG_0167.WEBP') }}"); }
-        .g168 { background-image: url("{{ url_for('static', filename='IMG_0168.WEBP') }}"); }
-        .g170 { background-image: url("{{ url_for('static', filename='IMG_0170.WEBP') }}"); }
-        .g171 { background-image: url("{{ url_for('static', filename='IMG_0171.WEBP') }}"); }
-        .g172 { background-image: url("{{ url_for('static', filename='IMG_0172.WEBP') }}"); }
-        .g173 { background-image: url("{{ url_for('static', filename='IMG_0173.WEBP') }}"); }
-        
+        /* --- INTERFACE SIGNAL --- */
         #interface-signal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0e1015; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .content-overlay { text-align: center; width: 100%; padding: 20px; }
-        .game-icon-small { width: 80px; height: 80px; border-radius: 50%; background-size: cover; background-position: center; border: 3px solid #00ffcc; margin: 0 auto 15px auto; }
-        .result-box { background: #1c1f26; padding: 15px; border-radius: 15px; margin: 20px 0; display: none; border: 1px solid #333; }
-        .btn-action { margin-top: 10px; padding: 15px 40px; font-size: 16px; font-weight: bold; border-radius: 30px; border: none; cursor: pointer; width: 80%; }
+        .game-icon-small { width: 80px; height: 80px; border-radius: 50%; background-size: cover; border: 3px solid #00ffcc; margin-bottom: 15px; }
+        .result-box { background: #1c1f26; padding: 20px; border-radius: 15px; margin: 20px 0; border: 1px solid #333; font-size: 24px; font-weight: bold; min-width: 200px; text-align: center; }
+        
+        /* --- BOUTONS --- */
+        .btn-action { margin-top: 10px; padding: 15px 30px; font-size: 16px; font-weight: bold; border-radius: 30px; border: none; cursor: pointer; width: 80%; }
         .btn-signal { background: #00ffcc; color: #0e1015; }
+        .btn-back { background: #333; color: white; }
     </style>
 </head>
 <body>
+
     <div id="main-menu" style="display:none;">
-        <h1 style="text-align:center; margin-bottom:20px;">PLATEFORME VIP</h1>
+        <h1 style="text-align:center;">PLATEFORME VIP</h1>
         <div class="games-grid">
             <div class="game-card g164" onclick="ouvrirJeu('Lucky Jet', 'g164')">Lucky Jet</div>
             <div class="game-card g165" onclick="ouvrirJeu('Rocket Queen', 'g165')">Rocket Queen</div>
@@ -47,20 +43,18 @@
     </div>
 
     <div id="interface-signal">
-        <div class="content-overlay">
-            <div id="game-icon" class="game-icon-small"></div>
-            <h2 id="nom-jeu-titre"></h2>
-            <div id="resultat-affichage" class="result-box"></div>
-            <button class="btn-action btn-signal" onclick="lancerCalcul()">DEMANDER SIGNAL</button>
-            <button class="btn-action" onclick="location.reload()">RETOUR</button>
-        </div>
+        <div id="game-icon" class="game-icon-small"></div>
+        <h2 id="nom-jeu-titre"></h2>
+        <div id="resultat-affichage" class="result-box">En attente...</div>
+        <button class="btn-action btn-signal" onclick="lancerCalcul()">DEMANDER SIGNAL</button>
+        <button class="btn-action btn-back" onclick="fermerJeu()">RETOUR</button>
     </div>
 
     <script>
-        // Vérification VIP au chargement
+        // 1. Vérification VIP
         async function verifierVIP() {
-            const playerId = prompt("Entrez votre ID de joueur pour accéder aux signaux :");
-            if (!playerId) return verifierVIP(); // Relance si annulé
+            const playerId = prompt("Entrez votre ID joueur pour accéder :");
+            if (!playerId) return verifierVIP();
 
             const res = await fetch('/verifier-vip', {
                 method: 'POST',
@@ -70,32 +64,39 @@
 
             if (res.status === 200) {
                 document.getElementById('main-menu').style.display = 'block';
-                chargerConfig();
             } else {
-                document.body.innerHTML = "<h1 style='text-align:center; margin-top:50px;'>ACCÈS REFUSÉ<br>Contactez le support.</h1>";
+                document.body.innerHTML = "<h1 style='text-align:center; margin-top:50px;'>ACCÈS REFUSÉ</h1><p style='text-align:center;'>ID invalide ou non activé.</p>";
             }
         }
-        verifierVIP();
 
-        let configJeux = {};
-        async function chargerConfig() {
-            const response = await fetch("{{ url_for('static', filename='config.json') }}");
-            configJeux = await response.json();
-        }
-
+        // 2. Navigation
         function ouvrirJeu(nom, classe) {
             document.getElementById('main-menu').style.display = 'none';
             document.getElementById('interface-signal').style.display = 'flex';
             document.getElementById('game-icon').className = 'game-icon-small ' + classe;
             document.getElementById('nom-jeu-titre').innerText = nom;
-            window.currentGame = { nom };
+            window.currentGame = nom;
+        }
+
+        function fermerJeu() {
+            document.getElementById('main-menu').style.display = 'block';
+            document.getElementById('interface-signal').style.display = 'none';
         }
 
         function lancerCalcul() {
-            const cfg = configJeux[currentGame.nom];
-            if (!cfg) return alert("Configuration en cours...");
-            // ... (ton code de calcul reste identique)
+            const resBox = document.getElementById('resultat-affichage');
+            resBox.style.display = 'block';
+            resBox.innerText = "Calcul en cours...";
+            
+            // Simuler un calcul
+            setTimeout(() => {
+                const cote = (Math.random() * (10 - 1.2) + 1.2).toFixed(2);
+                resBox.innerText = "🎯 " + cote + "x";
+            }, 1500);
         }
+
+        // Lancement
+        verifierVIP();
     </script>
 </body>
 </html>
