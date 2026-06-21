@@ -3,38 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PLATEFORME VIP</title>
+    <title>SIGNAL GAME</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* Styles Généraux */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: #0e1015; color: #ffffff; padding: 16px; min-height: 100vh; text-align: center; }
-
-        /* --- MENU PRINCIPAL (GRILLE) --- */
-        #main-menu h1 { margin-bottom: 20px; font-size: 24px; }
         
         .games-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+        .game-card { border-radius: 14px; aspect-ratio: 1 / 1.4; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 10px; cursor: pointer; background-size: cover; background-position: center; background-color: #151822; font-size: 10px; font-weight: bold; text-transform: uppercase; border: 1px solid #333; }
         
-        /* Style des cartes avec image de fond */
-        .game-card { 
-            border-radius: 14px; 
-            aspect-ratio: 1 / 1.4; /* Ratio vertical comme sur ton image */
-            display: flex; 
-            flex-direction: column; 
-            justify-content: flex-end; /* Texte en bas */
-            align-items: center; 
-            padding-bottom: 10px; 
-            cursor: pointer; 
-            background-size: cover; 
-            background-position: center; 
-            background-color: #151822; /* Couleur de fond si l'image charge pas */
-            font-size: 10px; 
-            font-weight: bold; 
-            text-transform: uppercase; 
-            border: 1px solid #333; 
-        }
-
-        /* Chemins des images (Flask/Jinja2) - Assigne chaque classe à son image */
         .g164 { background-image: url("{{ url_for('static', filename='IMG_0164.WEBP') }}"); }
         .g165 { background-image: url("{{ url_for('static', filename='IMG_0165.WEBP') }}"); }
         .g166 { background-image: url("{{ url_for('static', filename='IMG_0166.WEBP') }}"); }
@@ -44,22 +21,13 @@
         .g171 { background-image: url("{{ url_for('static', filename='IMG_0171.WEBP') }}"); }
         .g172 { background-image: url("{{ url_for('static', filename='IMG_0172.WEBP') }}"); }
         .g173 { background-image: url("{{ url_for('static', filename='IMG_0173.WEBP') }}"); }
-
-        /* --- INTERFACE DE SIGNAL (DÉTAIL) --- */
+        
         #interface-signal { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; margin-top: 20px; }
-        
-        /* Icône ronde du jeu sélectionné */
-        .game-icon-detail { width: 80px; height: 80px; border-radius: 50%; background-size: cover; background-position: center; border: 3px solid #00ffcc; margin: 0 auto 15px auto; }
-        
-        /* Bloc de résultat central */
-        .result-container { background: #1c1f26; padding: 20px; border-radius: 15px; margin: 20px 0; border: 1px solid #333; width: 90%; max-width: 350px; }
+        .result-container { background: #1c1f26; padding: 20px; border-radius: 15px; margin: 20px 0; border: 1px solid #333; width: 90%; }
         .cote-label { color: #888; font-size: 14px; }
         .cote-value { color: #00ffcc; font-size: 32px; font-weight: bold; margin: 10px 0; }
-        .info-row { font-size: 14px; color: #ccc; margin: 5px 0; }
-        
-        /* Boutons */
-        .btn-action { background: #00ffcc; color: #0e1015; border: none; padding: 15px; border-radius: 30px; font-weight: bold; width: 90%; max-width: 350px; margin-bottom: 10px; cursor: pointer; font-size: 16px; text-transform: uppercase;}
-        .btn-back { background: #e0e0e0; color: #333; border: none; padding: 15px; border-radius: 30px; font-weight: bold; width: 90%; max-width: 350px; cursor: pointer; font-size: 16px; text-transform: uppercase;}
+        .btn-action { background: #00ffcc; color: #0e1015; border: none; padding: 15px; border-radius: 30px; font-weight: bold; width: 90%; margin-bottom: 10px; cursor: pointer; }
+        .btn-back { background: #e0e0e0; color: #333; border: none; padding: 15px; border-radius: 30px; font-weight: bold; width: 90%; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -80,54 +48,38 @@
     </div>
 
     <div id="interface-signal">
-        <div id="game-icon-detail" class="game-icon-detail"></div>
         <h2 id="nom-jeu"></h2>
-        
         <div class="result-container">
             <div class="cote-label">Cote cible</div>
             <div id="cote-cible" class="cote-value">-</div>
-            <div id="heure-signal" class="info-row"></div>
-            <div id="fiabilite" class="info-row"></div>
+            <div id="heure-affichage" style="font-size: 14px; color: #ccc;"></div>
+            <div id="fiabilite-affichage" style="font-size: 14px; color: #ccc;"></div>
         </div>
-
         <button class="btn-action" onclick="lancerCalcul()">DEMANDER SIGNAL</button>
         <button class="btn-back" onclick="fermerJeu()">RETOUR</button>
     </div>
 
     <script>
-        // Ta configuration (Fiabilité et délais)
-        const config = {
-            "Lucky Jet": {"fiabilite": 1.5, "delai": 30},
-            "Rocket Queen": {"fiabilite": 2, "delai": 50},
-            "1win Crash": {"fiabilite": 2, "delai": 50},
-            "Tropicana": {"fiabilite": 2, "delai": 50},
-            "Fortune Crash": {"fiabilite": 2, "delai": 50},
-            "Meta Crash": {"fiabilite": 2, "delai": 50},
-            "Empire Crime": {"fiabilite": 2, "delai": 50},
-            "Astronaut": {"fiabilite": 2, "delai": 50},
-            "Aviator": {"fiabilite": 2, "delai": 50}
+        const gameConfigs = {
+            "Lucky Jet": {"cycle": 4, "secondes": "30", "fiabilite": 1.5},
+            "Rocket Queen": {"cycle": 3, "secondes": "50", "fiabilite": 2},
+            "1win Crash": {"cycle": 3, "secondes": "50", "fiabilite": 2},
+            "Tropicana": {"cycle": 5, "secondes": "50", "fiabilite": 2},
+            "Fortune Crash": {"cycle": 7, "secondes": "50", "fiabilite": 2},
+            "Meta Crash": {"cycle": 6, "secondes": "50", "fiabilite": 2},
+            "Empire Crime": {"cycle": 6, "secondes": "50", "fiabilite": 2},
+            "Astronaut": {"cycle": 5, "secondes": "50", "fiabilite": 2},
+            "Aviator": {"cycle": 4, "secondes": "50", "fiabilite": 2}
         };
 
         let jeuActuel = "";
+        window.Telegram.WebApp.ready();
 
-        // Initialisation de la WebApp Telegram
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
-
-        function ouvrirJeu(nom, classeImage) {
+        function ouvrirJeu(nom, classe) {
             jeuActuel = nom;
             document.getElementById('main-menu').style.display = 'none';
-            document.getElementById('interface-signal').style.display = 'flex'; // Utilise flex pour le centrage
+            document.getElementById('interface-signal').style.display = 'flex';
             document.getElementById('nom-jeu').innerText = nom;
-            
-            // Applique l'image correspondante à l'icône ronde de détail
-            document.getElementById('game-icon-detail').className = 'game-icon-detail ' + classeImage;
-
-            // Réinitialisation de l'affichage
-            document.getElementById('cote-cible').innerText = "-";
-            document.getElementById('heure-signal').innerText = "";
-            document.getElementById('fiabilite').innerText = "";
         }
 
         function fermerJeu() {
@@ -136,16 +88,28 @@
         }
 
         function lancerCalcul() {
-            const conf = config[jeuActuel];
-            const display = document.getElementById('cote-cible');
-            display.innerText = "Calcul...";
+            const res = document.getElementById('cote-cible');
+            const conf = gameConfigs[jeuActuel];
+            res.innerText = "Calcul...";
 
             setTimeout(() => {
-                // Cote aléatoire 10+
-                const cote = (Math.random() * (20 - 10) + 10).toFixed(2);
-                
-                // Heure actuelle formatée HH:MM:SS
                 const now = new Date();
-                const timeString = now.toTimeString().split(' ')[0];
-
-                display.innerText = cote + "x";
+                const minutesActuelles = now.getHours() * 60 + now.getMinutes();
+                const cycle = conf.cycle;
+                let creneau = Math.ceil((minutesActuelles + 1) / cycle) * cycle;
+                
+                const h = Math.floor(creneau / 60) % 24;
+                const m = creneau % 60;
+                
+                const seed = Math.sin(creneau) * 10000;
+                const cote = (10 + (Math.abs(seed) % 10)).toFixed(2);
+                
+                res.innerText = cote + "x";
+                document.getElementById('heure-affichage').innerText = "Début du signal: " + 
+                    h.toString().padStart(2, '0') + ":" + m.toString().padStart(2, '0') + ":" + conf.secondes + " UTC";
+                document.getElementById('fiabilite-affichage').innerText = "Fiabilité: " + conf.fiabilite;
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
