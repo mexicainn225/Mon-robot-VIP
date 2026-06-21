@@ -22,7 +22,7 @@ def home(): return render_template('index.html')
 def verifier_vip():
     data = request.json
     identifiant = str(data.get('player_id'))
-    # Recherche flexible dans MongoDB
+    # Recherche flexible : accepte soit l'ID Telegram soit le Player ID
     user = users_col.find_one({"$or": [{"player_id": identifiant}, {"telegram_id": identifiant}]})
     return jsonify({"status": "VIP" if user and user.get('is_vip') else "NON_VIP"}), 200 if user and user.get('is_vip') else 403
 
