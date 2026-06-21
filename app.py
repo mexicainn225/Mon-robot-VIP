@@ -11,15 +11,11 @@ def home():
     return render_template('index.html')
 
 def run_web():
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port)
-
-async def start(update, context):
-    await update.message.reply_text("🚀 Bienvenue ! Accédez aux signaux via le bouton ci-dessous.")
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 10000)))
 
 if __name__ == '__main__':
     Thread(target=run_web, daemon=True).start()
     if TOKEN:
         bot_app = ApplicationBuilder().token(TOKEN).build()
-        bot_app.add_handler(CommandHandler("start", start))
+        bot_app.add_handler(CommandHandler("start", lambda u, c: u.message.reply_text("🚀 Bienvenue ! Accédez aux signaux.")))
         bot_app.run_polling()
