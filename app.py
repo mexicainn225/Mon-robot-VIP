@@ -1,69 +1,71 @@
-import os
-import logging
-from telegram import Update
-from telegram.ext import ApplicationBuilder, MessageHandler, CommandHandler, filters, ContextTypes
-from flask import Flask, request, jsonify, render_template
-from threading import Thread
-from pymongo import MongoClient
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIGNAL MEXICAIN</title>
+    <style>
+        body { background: #0e1015; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; }
+        .box { background:#1c1f26; padding:20px; border-radius:15px; margin:20px; border:1px solid #333; }
+        .btn { padding: 15px 40px; border-radius: 30px; border:none; font-weight:bold; cursor:pointer; width:80%; margin-top:10px; }
+    </style>
+</head>
+<body>
 
-# --- CONFIGURATION ---
-app = Flask(__name__, template_folder='templates')
-TOKEN = os.environ.get("TOKEN")
-MONGO_URI = os.environ.get("MONGO_URI")
-ADMIN_ID = "5724620019"
+<div id="app-container">
+    <h2>Vérification VIP...</h2>
+</div>
 
-client = MongoClient(MONGO_URI)
-db = client['plateforme_db']
-users_col = db['users'] 
+<script>
+    // 1. Vérification automatique au démarrage
+    async function verifierVIP() {
+        const player_id = "ID_UTILISATEUR"; // Dans Telegram, récupère l'ID réel via WebApp
+        const response = await fetch('/verifier-vip', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ player_id: player_id })
+        });
 
-# --- SERVEUR WEB ---
-@app.route('/')
-def home(): 
-    return render_template('index.html')
+        if (response.status === 200) {
+            afficherInterface();
+        } else {
+            document.getElementById('app-container').innerHTML = "<h2>❌ Accès refusé</h2><p>Veuillez contacter l'admin pour valider votre compte.</p>";
+        }
+    }
 
-@app.route('/verifier-vip', methods=['POST'])
-def verifier_vip():
-    data = request.json
-    # On vérifie par le player_id envoyé depuis index.html
-    player_id = str(data.get('player_id'))
-    user = users_col.find_one({"player_id": player_id})
-    if user and user.get('is_vip'):
-        return jsonify({"status": "VIP"}), 200
-    return jsonify({"status": "NON_VIP"}), 403
+    function afficherInterface() {
+        document.getElementById('app-container').innerHTML = `
+            <div id="interface">
+                <h2 id="titre">Signal</h2>
+                <div id="res" class="box" style="display:none;">
+                    <p>Cote cible</p>
+                    <div id="cote" style="font-size:32px; color:#00ffcc; font-weight:bold;">--</div>
+                    <p>Début du signal: <span id="heure">--</span></p>
+                    <p>Fiabilité: <span id="fiab">--</span></p>
+                </div>
+                <button class="btn" style="background:#00ffcc" onclick="calc()">DEMANDER SIGNAL</button>
+            </div>
+        `;
+    }
 
-def run_web(): 
-    app.run(host='0.0.0.0', port=10000)
+    // Logique de cycle (30s pour Lucky, 50s pour les autres)
+    function calc() {
+        const jeu = "Lucky Jet"; // À adapter dynamiquement selon le jeu cliqué
+        const sFixe = (jeu === 'Lucky Jet') ? 30 : 50;
+        const cycleEnSecondes = 4 * 60; // 4 minutes
+        
+        const now = Math.floor(Date.now() / 1000);
+        const prochainTs = Math.ceil(now / cycleEnSecondes) * cycleEnSecondes;
+        const d = new Date(prochainTs * 1000);
+        d.setUTCSeconds(sFixe);
 
-Thread(target=run_web, daemon=True).start()
+        document.getElementById('res').style.display = 'block';
+        document.getElementById('cote').innerText = (Math.random() * (15 - 2) + 2).toFixed(2) + "x";
+        document.getElementById('heure').innerText = d.getUTCHours().toString().padStart(2,'0') + ":" + d.getUTCMinutes().toString().padStart(2,'0') + ":" + sFixe + " UTC";
+        document.getElementById('fiab').innerText = "2.0";
+    }
 
-# --- BOT TELEGRAM ---
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    msg = "🚀 **BIENVENUE SUR SIGNAL MEXICAIN** 🇨🇮\n\nEnvoyez votre **ID Joueur** pour validation."
-    await update.message.reply_text(msg, parse_mode='Markdown')
-
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text
-    user_id = str(update.effective_user.id)
-    
-    if text.isdigit() and len(text) > 5:
-        # Stocke le player_id dans MongoDB en attente de validation
-        users_col.update_one({"telegram_id": user_id}, {"$set": {"player_id": text, "is_vip": False}}, upsert=True)
-        await context.bot.send_message(chat_id=ADMIN_ID, text=f"🔔 Nouvelle demande ID: `{text}` (Telegram: {user_id}). Utilise /valider {user_id}")
-        await update.message.reply_text("⏳ Demande envoyée ! Attendez la validation.")
-    else:
-        await update.message.reply_text("❌ Envoyez votre ID joueur valide.")
-
-async def valider_joueur(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if str(update.effective_user.id) == ADMIN_ID and context.args:
-        target_id = context.args[0]
-        users_col.update_one({"telegram_id": target_id}, {"$set": {"is_vip": True}})
-        await update.message.reply_text(f"✅ Utilisateur {target_id} validé.")
-
-if __name__ == '__main__':
-    bot_app = ApplicationBuilder().token(TOKEN).build()
-    bot_app.add_handler(CommandHandler("start", start))
-    bot_app.add_handler(CommandHandler("valider", valider_joueur))
-    bot_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    bot_app.run_polling()
+    verifierVIP();
+</script>
+</body>
+</html>
