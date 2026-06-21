@@ -43,15 +43,16 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=lo
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = (
-        "🤖 **COMMENT BÉNÉFICIER DU BOT ?** ⤵️\n\n"
-        "Condition obligatoire :\n"
-        "➡️ 🟡 Être inscrit avec le code promo **COK225**\n"
-        "🔗 https://lkbb.cc/78634e\n\n"
-        "➡️ 🟡 RECHARGEZ VOTRE COMPTE ✔️\n\n"
-        "➡️ 🟡 Envoyez votre **ID joueur** ici pour être confirmé ✅\n\n"
-        "🔒 Signaux illimités avec le code promo COK225"
+        "🚀 **BIENVENUE SUR SIGNAL MEXICAIN** 🇨🇮\n\n"
+        "Gagnez en toute sérénité avec nos signaux exclusifs !\n\n"
+        "**Comment activer votre accès ?**\n"
+        "1️⃣ Inscrivez-vous sur : https://lkbb.cc/78634e\n"
+        "2️⃣ Utilisez le code promo : **COK225**\n"
+        "3️⃣ Rechargez votre compte.\n"
+        "4️⃣ Envoyez votre **ID Joueur** dans ce bot pour validation.\n\n"
+        "*Votre compte sera activé par l'administrateur après vérification.*"
     )
-    await update.message.reply_text(msg)
+    await update.message.reply_text(msg, parse_mode='Markdown')
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
@@ -64,21 +65,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("✅ Vous êtes déjà membre VIP ! Accédez à la Web App.")
         return
 
-    # Processus d'inscription
-    if text == "COK225":
-        context.user_data['waiting_for_id'] = True
-        await update.message.reply_text("✅ Code valide ! Envoyez-moi maintenant votre ID de joueur pour validation.")
-    
-    elif context.user_data.get('waiting_for_id') and text.isdigit():
-        # Transférer la demande à l'admin
+    # Si le message est un ID (chiffres seulement)
+    if text.isdigit() and len(text) > 5:
         await context.bot.send_message(
             chat_id=ADMIN_ID,
-            text=f"🔔 **Nouvelle demande de validation**\n👤 Utilisateur : @{username} (ID: {user_id})\n🆔 ID Joueur : `{text}`"
+            text=f"🔔 **Nouvelle demande d'activation**\n\n👤 Utilisateur : @{username} (ID: {user_id})\n🆔 ID Joueur : `{text}`\n\n👉 Utilisez `/valider {user_id}` pour confirmer."
         )
-        await update.message.reply_text("⏳ Demande envoyée à l'admin. Veuillez patienter pour la confirmation.")
-        context.user_data['waiting_for_id'] = False
+        await update.message.reply_text("⏳ **Demande envoyée !**\n\nL'administrateur va vérifier votre inscription et valider votre accès sous peu. Patience...")
     else:
-        await update.message.reply_text("❌ Envoyez 'COK225' pour commencer ou votre ID joueur pour validation.")
+        await update.message.reply_text("❌ **Format invalide.**\n\nEnvoyez simplement votre **ID de joueur** (ex: 987654321) pour être activé.")
 
 async def valider_joueur(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if str(update.effective_user.id) != ADMIN_ID: return
@@ -86,7 +81,14 @@ async def valider_joueur(update: Update, context: ContextTypes.DEFAULT_TYPE):
         target_id = context.args[0]
         users_col.update_one({"telegram_id": target_id}, {"$set": {"is_vip": True}}, upsert=True)
         await update.message.reply_text(f"✅ Joueur {target_id} activé.")
-        await context.bot.send_message(chat_id=target_id, text="🎉 Votre accès VIP est confirmé !")
+        
+        # Envoi de la confirmation au joueur
+        try:
+            await context.bot.send_message(chat_id=target_id, text="🎉 **Félicitations !** Votre accès VIP est confirmé. Vous pouvez maintenant accéder aux signaux.")
+        except:
+            pass
+    else:
+        await update.message.reply_text("❌ Utilisation : /valider [ID_TELEGRAM]")
 
 if __name__ == '__main__':
     bot_app = ApplicationBuilder().token(TOKEN).build()
