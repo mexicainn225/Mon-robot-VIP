@@ -12,7 +12,6 @@
         .games-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
         .game-card { border-radius: 14px; aspect-ratio: 1 / 1.4; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 10px; cursor: pointer; background-size: cover; background-position: center; background-color: #151822; font-size: 10px; font-weight: bold; text-transform: uppercase; border: 1px solid #333; }
         
-        /* Classes des jeux */
         .g164 { background-image: url("{{ url_for('static', filename='IMG_0164.WEBP') }}"); }
         .g165 { background-image: url("{{ url_for('static', filename='IMG_0165.WEBP') }}"); }
         .g166 { background-image: url("{{ url_for('static', filename='IMG_0166.WEBP') }}"); }
@@ -34,8 +33,9 @@
         .cote-label { color: #888; font-size: 14px; }
         .cote-value { color: #00ffcc; font-size: 32px; font-weight: bold; margin: 10px 0; }
         
-        .fiabilite-haute { color: #00ffcc; font-weight: bold; }
-        .fiabilite-basse { color: #ff3366; font-weight: bold; }
+        .fiabilite-text { font-size: 14px; font-weight: bold; }
+        .fiabilite-haute { color: #00ffcc; }
+        .fiabilite-basse { color: #ff3366; }
         
         .btn-action { background: #00ffcc; color: #0e1015; border: none; padding: 15px; border-radius: 30px; font-weight: bold; width: 90%; margin-bottom: 10px; cursor: pointer; }
         .btn-back { background: #e0e0e0; color: #333; border: none; padding: 15px; border-radius: 30px; font-weight: bold; width: 90%; cursor: pointer; }
@@ -64,7 +64,7 @@
             <div class="cote-label">Cote cible</div>
             <div id="cote-cible" class="cote-value">-</div>
             <div id="heure-affichage" style="font-size: 14px; color: #ccc;"></div>
-            <div id="fiabilite-affichage" style="font-size: 14px; color: #ccc;"></div>
+            <div id="fiabilite-affichage" class="fiabilite-text"></div>
         </div>
         <button class="btn-action" onclick="lancerCalcul()">DEMANDER SIGNAL</button>
         <button class="btn-back" onclick="fermerJeu()">RETOUR</button>
@@ -75,15 +75,15 @@
         tg.ready();
         
         const gameConfigs = {
-            "Lucky Jet": {"cycle": 4, "secondes": "30", "fiabilite": 2},
-            "Rocket Queen": {"cycle": 3, "secondes": "50", "fiabilite": 2.1},
-            "1win Crash": {"cycle": 3, "secondes": "50", "fiabilite": 1.9},
+            "Lucky Jet": {"cycle": 4, "secondes": "30", "fiabilite": 1.5},
+            "Rocket Queen": {"cycle": 3, "secondes": "50", "fiabilite": 2},
+            "1win Crash": {"cycle": 3, "secondes": "50", "fiabilite": 2},
             "Tropicana": {"cycle": 5, "secondes": "50", "fiabilite": 2},
-            "Fortune Crash": {"cycle": 7, "secondes": "50", "fiabilite": 1.7},
-            "Meta Crash": {"cycle": 6, "secondes": "50", "fiabilite": 1.8},
+            "Fortune Crash": {"cycle": 7, "secondes": "50", "fiabilite": 2},
+            "Meta Crash": {"cycle": 6, "secondes": "50", "fiabilite": 2},
             "Empire Crime": {"cycle": 6, "secondes": "50", "fiabilite": 2},
-            "Astronaut": {"cycle": 5, "secondes": "50", "fiabilite": 1.9},
-            "Aviator": {"cycle": 4, "secondes": "50", "fiabilite": 2.2}
+            "Astronaut": {"cycle": 5, "secondes": "50", "fiabilite": 2},
+            "Aviator": {"cycle": 4, "secondes": "50", "fiabilite": 2}
         };
 
         let jeuActuel = "";
@@ -123,7 +123,8 @@
                     h.toString().padStart(2, '0') + ":" + m.toString().padStart(2, '0') + ":" + conf.secondes;
                 
                 fiabEl.innerText = "Fiabilité: " + conf.fiabilite;
-                fiabEl.className = conf.fiabilite >= 2 ? 'fiabilite-haute' : 'fiabilite-basse';
+                // Logique de couleur : 2 est vert, 1.5 est rouge
+                fiabEl.className = 'fiabilite-text ' + (conf.fiabilite >= 2 ? 'fiabilite-haute' : 'fiabilite-basse');
             }, 1000);
         }
     </script>
