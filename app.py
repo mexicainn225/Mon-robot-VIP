@@ -11,7 +11,7 @@ db = client['plateforme_db']
 users_col = db['users']
 
 ADMIN_ID = "5724620019"
-WEBAPP_URL = "https://mon-robot-vip-1.onrender.com" 
+WEBAPP_URL = "https://ton-service.onrender.com" 
 
 def get_keyboard(is_vip):
     if is_vip:
