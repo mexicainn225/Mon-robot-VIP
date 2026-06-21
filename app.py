@@ -1,71 +1,64 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIGNAL MEXICAIN</title>
-    <style>
-        body { background: #0e1015; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; }
-        .box { background:#1c1f26; padding:20px; border-radius:15px; margin:20px; border:1px solid #333; }
-        .btn { padding: 15px 40px; border-radius: 30px; border:none; font-weight:bold; cursor:pointer; width:80%; margin-top:10px; }
-    </style>
-</head>
-<body>
+import logging
+from telegram import Update
+from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
+from pymongo import MongoClient
 
-<div id="app-container">
-    <h2>Vérification VIP...</h2>
-</div>
+# --- CONFIGURATION ---
+TOKEN = "TON_TOKEN_TELEGRAM_ICI"
+MONGO_URI = "mongodb://localhost:27017/"
+DB_NAME = "robot_vip_db"
 
-<script>
-    // 1. Vérification automatique au démarrage
-    async function verifierVIP() {
-        const player_id = "ID_UTILISATEUR"; // Dans Telegram, récupère l'ID réel via WebApp
-        const response = await fetch('/verifier-vip', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ player_id: player_id })
-        });
+# Connexion MongoDB
+client = MongoClient(MONGO_URI)
+db = client[DB_NAME]
+users_col = db["users"]
 
-        if (response.status === 200) {
-            afficherInterface();
-        } else {
-            document.getElementById('app-container').innerHTML = "<h2>❌ Accès refusé</h2><p>Veuillez contacter l'admin pour valider votre compte.</p>";
-        }
-    }
+# Logging
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
-    function afficherInterface() {
-        document.getElementById('app-container').innerHTML = `
-            <div id="interface">
-                <h2 id="titre">Signal</h2>
-                <div id="res" class="box" style="display:none;">
-                    <p>Cote cible</p>
-                    <div id="cote" style="font-size:32px; color:#00ffcc; font-weight:bold;">--</div>
-                    <p>Début du signal: <span id="heure">--</span></p>
-                    <p>Fiabilité: <span id="fiab">--</span></p>
-                </div>
-                <button class="btn" style="background:#00ffcc" onclick="calc()">DEMANDER SIGNAL</button>
-            </div>
-        `;
-    }
+# --- MESSAGES ---
+WELCOME_MESSAGE = (
+    "🚀 **Bienvenue sur le Robot Signal !**\n\n"
+    "Pour accéder à nos signaux exclusifs et activer votre accès, suivez ces étapes :\n\n"
+    "1️⃣ **Inscrivez-vous** ici : https://lkbb.cc/78634e\n"
+    "2️⃣ **Envoyez-nous votre ID utilisateur** (ID de jeu) pour validation.\n\n"
+    "Code promo : **COK225**"
+)
 
-    // Logique de cycle (30s pour Lucky, 50s pour les autres)
-    function calc() {
-        const jeu = "Lucky Jet"; // À adapter dynamiquement selon le jeu cliqué
-        const sFixe = (jeu === 'Lucky Jet') ? 30 : 50;
-        const cycleEnSecondes = 4 * 60; // 4 minutes
-        
-        const now = Math.floor(Date.now() / 1000);
-        const prochainTs = Math.ceil(now / cycleEnSecondes) * cycleEnSecondes;
-        const d = new Date(prochainTs * 1000);
-        d.setUTCSeconds(sFixe);
+# --- FONCTIONS ---
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(WELCOME_MESSAGE, parse_mode='Markdown')
 
-        document.getElementById('res').style.display = 'block';
-        document.getElementById('cote').innerText = (Math.random() * (15 - 2) + 2).toFixed(2) + "x";
-        document.getElementById('heure').innerText = d.getUTCHours().toString().padStart(2,'0') + ":" + d.getUTCMinutes().toString().padStart(2,'0') + ":" + sFixe + " UTC";
-        document.getElementById('fiab').innerText = "2.0";
-    }
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_input = update.message.text.strip()
+    telegram_id = update.message.from_user.id
+    username = update.message.from_user.username
 
-    verifierVIP();
-</script>
-</body>
-</html>
+    # Si l'utilisateur envoie un ID (composé uniquement de chiffres)
+    if user_input.isdigit():
+        users_col.update_one(
+            {"telegram_id": telegram_id},
+            {"$set": {
+                "game_id": user_input,
+                "username": username,
+                "status": "pending_verification"
+            }},
+            upsert=True
+        )
+        await update.message.reply_text(
+            f"✅ **ID {user_input} bien reçu !**\n"
+            "Votre compte est en cours de vérification par notre équipe.\n"
+            "Vous serez notifié dès l'activation."
+        )
+    else:
+        await update.message.reply_text("❌ Veuillez envoyer un ID de jeu valide (chiffres uniquement).")
+
+# --- LANCEMENT ---
+if __name__ == '__main__':
+    app = ApplicationBuilder().token(TOKEN).build()
+    
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
+    
+    print("Bot démarré...")
+    app.run_polling()
