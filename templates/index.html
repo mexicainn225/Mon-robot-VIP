@@ -12,6 +12,7 @@
         .games-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
         .game-card { border-radius: 14px; aspect-ratio: 1 / 1.4; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 10px; cursor: pointer; background-size: cover; background-position: center; background-color: #151822; font-size: 10px; font-weight: bold; text-transform: uppercase; border: 1px solid #333; }
         
+        /* Classes des jeux */
         .g164 { background-image: url("{{ url_for('static', filename='IMG_0164.WEBP') }}"); }
         .g165 { background-image: url("{{ url_for('static', filename='IMG_0165.WEBP') }}"); }
         .g166 { background-image: url("{{ url_for('static', filename='IMG_0166.WEBP') }}"); }
@@ -23,9 +24,19 @@
         .g173 { background-image: url("{{ url_for('static', filename='IMG_0173.WEBP') }}"); }
         
         #interface-signal { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; margin-top: 20px; }
-        .result-container { background: #1c1f26; padding: 20px; border-radius: 15px; margin: 20px 0; border: 1px solid #333; width: 90%; }
+        
+        .result-container { 
+            padding: 20px; border-radius: 15px; margin: 20px 0; border: 1px solid #333; width: 90%; 
+            background-size: cover; background-position: center; 
+            background-color: rgba(28, 31, 38, 0.9); background-blend-mode: overlay;
+        }
+        
         .cote-label { color: #888; font-size: 14px; }
         .cote-value { color: #00ffcc; font-size: 32px; font-weight: bold; margin: 10px 0; }
+        
+        .fiabilite-haute { color: #00ffcc; font-weight: bold; }
+        .fiabilite-basse { color: #ff3366; font-weight: bold; }
+        
         .btn-action { background: #00ffcc; color: #0e1015; border: none; padding: 15px; border-radius: 30px; font-weight: bold; width: 90%; margin-bottom: 10px; cursor: pointer; }
         .btn-back { background: #e0e0e0; color: #333; border: none; padding: 15px; border-radius: 30px; font-weight: bold; width: 90%; cursor: pointer; }
     </style>
@@ -49,7 +60,7 @@
 
     <div id="interface-signal">
         <h2 id="nom-jeu"></h2>
-        <div class="result-container">
+        <div class="result-container" id="res-box">
             <div class="cote-label">Cote cible</div>
             <div id="cote-cible" class="cote-value">-</div>
             <div id="heure-affichage" style="font-size: 14px; color: #ccc;"></div>
@@ -60,26 +71,29 @@
     </div>
 
     <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        
         const gameConfigs = {
-            "Lucky Jet": {"cycle": 4, "secondes": "30", "fiabilite": 1.5},
-            "Rocket Queen": {"cycle": 3, "secondes": "50", "fiabilite": 2},
-            "1win Crash": {"cycle": 3, "secondes": "50", "fiabilite": 2},
+            "Lucky Jet": {"cycle": 4, "secondes": "30", "fiabilite": 2},
+            "Rocket Queen": {"cycle": 3, "secondes": "50", "fiabilite": 2.1},
+            "1win Crash": {"cycle": 3, "secondes": "50", "fiabilite": 1.9},
             "Tropicana": {"cycle": 5, "secondes": "50", "fiabilite": 2},
-            "Fortune Crash": {"cycle": 7, "secondes": "50", "fiabilite": 2},
-            "Meta Crash": {"cycle": 6, "secondes": "50", "fiabilite": 2},
+            "Fortune Crash": {"cycle": 7, "secondes": "50", "fiabilite": 1.7},
+            "Meta Crash": {"cycle": 6, "secondes": "50", "fiabilite": 1.8},
             "Empire Crime": {"cycle": 6, "secondes": "50", "fiabilite": 2},
-            "Astronaut": {"cycle": 5, "secondes": "50", "fiabilite": 2},
-            "Aviator": {"cycle": 4, "secondes": "50", "fiabilite": 2}
+            "Astronaut": {"cycle": 5, "secondes": "50", "fiabilite": 1.9},
+            "Aviator": {"cycle": 4, "secondes": "50", "fiabilite": 2.2}
         };
 
         let jeuActuel = "";
-        window.Telegram.WebApp.ready();
 
         function ouvrirJeu(nom, classe) {
             jeuActuel = nom;
             document.getElementById('main-menu').style.display = 'none';
             document.getElementById('interface-signal').style.display = 'flex';
             document.getElementById('nom-jeu').innerText = nom;
+            document.getElementById('res-box').className = 'result-container ' + classe;
         }
 
         function fermerJeu() {
@@ -89,25 +103,27 @@
 
         function lancerCalcul() {
             const res = document.getElementById('cote-cible');
+            const fiabEl = document.getElementById('fiabilite-affichage');
             const conf = gameConfigs[jeuActuel];
+            
+            tg.HapticFeedback.impactOccurred('medium');
             res.innerText = "Calcul...";
 
             setTimeout(() => {
                 const now = new Date();
-                const minutesActuelles = now.getHours() * 60 + now.getMinutes();
-                const cycle = conf.cycle;
-                let creneau = Math.ceil((minutesActuelles + 1) / cycle) * cycle;
+                const minutes = now.getHours() * 60 + now.getMinutes();
+                const creneau = Math.ceil((minutes + 1) / conf.cycle) * conf.cycle;
                 
                 const h = Math.floor(creneau / 60) % 24;
                 const m = creneau % 60;
-                
-                const seed = Math.sin(creneau) * 10000;
-                const cote = (10 + (Math.abs(seed) % 10)).toFixed(2);
+                const cote = (10 + (Math.abs(Math.sin(creneau)) * 10)).toFixed(2);
                 
                 res.innerText = cote + "x";
-                document.getElementById('heure-affichage').innerText = "Début du signal: " + 
-                    h.toString().padStart(2, '0') + ":" + m.toString().padStart(2, '0') + ":" + conf.secondes + " UTC";
-                document.getElementById('fiabilite-affichage').innerText = "Fiabilité: " + conf.fiabilite;
+                document.getElementById('heure-affichage').innerText = "Début: " + 
+                    h.toString().padStart(2, '0') + ":" + m.toString().padStart(2, '0') + ":" + conf.secondes;
+                
+                fiabEl.innerText = "Fiabilité: " + conf.fiabilite;
+                fiabEl.className = conf.fiabilite >= 2 ? 'fiabilite-haute' : 'fiabilite-basse';
             }, 1000);
         }
     </script>
