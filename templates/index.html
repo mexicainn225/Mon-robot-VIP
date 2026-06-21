@@ -3,95 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIGNAL GAME</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>SIGNAL MEXICAIN</title>
     <style>
         body { background: #0e1015; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; }
-        .games-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .card { border-radius: 14px; aspect-ratio: 1/1.4; background-size: cover; cursor: pointer; border: 1px solid #333; }
-        .g-lucky { background-image: url("/static/IMG_0164.WEBP"); }
-        .g-rocket { background-image: url("/static/IMG_0165.WEBP"); }
-        .g-1win { background-image: url("/static/IMG_0166.WEBP"); }
-        .g-tropic { background-image: url("/static/IMG_0167.WEBP"); }
-        .g-fortune { background-image: url("/static/IMG_0168.WEBP"); }
-        .g-meta { background-image: url("/static/IMG_0170.WEBP"); }
-        .g-empire { background-image: url("/static/IMG_0171.WEBP"); }
-        .g-astro { background-image: url("/static/IMG_0172.WEBP"); }
-        .g-aviator { background-image: url("/static/IMG_0173.WEBP"); }
-        #interface { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:#0e1015; }
         .box { background:#1c1f26; padding:20px; border-radius:15px; margin:20px; border:1px solid #333; }
         .btn { padding: 15px 40px; border-radius: 30px; border:none; font-weight:bold; cursor:pointer; width:80%; margin-top:10px; }
-        #app-loader { padding: 50px; }
     </style>
 </head>
 <body>
 
-<div id="app-loader"><h1>Vérification de l'accès...</h1></div>
-
-<div id="main-content" style="display:none;">
-    <div id="menu" class="games-grid">
-        <div class="card g-lucky" onclick="ouvrir('Lucky Jet')"></div>
-        <div class="card g-rocket" onclick="ouvrir('Rocket Queen')"></div>
-        <div class="card g-1win" onclick="ouvrir('1win Crash')"></div>
-        <div class="card g-tropic" onclick="ouvrir('Tropicana')"></div>
-        <div class="card g-fortune" onclick="ouvrir('Fortune Crash')"></div>
-        <div class="card g-meta" onclick="ouvrir('Meta Crash')"></div>
-        <div class="card g-empire" onclick="ouvrir('Empire Crime')"></div>
-        <div class="card g-astro" onclick="ouvrir('Astronaut')"></div>
-        <div class="card g-aviator" onclick="ouvrir('Aviator')"></div>
-    </div>
-
-    <div id="interface">
-        <h2 id="titre"></h2>
-        <div id="res" class="box" style="display:none;">
-            <p>Cote cible</p>
-            <div id="cote" style="font-size:32px; color:#00ffcc; font-weight:bold;">--</div>
-            <p>Début du signal: <span id="heure">--</span></p>
-            <p>Fiabilité: <span id="fiab">--</span></p>
-        </div>
-        <button class="btn" style="background:#00ffcc; color:#0e1015" onclick="calc()">DEMANDER SIGNAL</button>
-        <button class="btn" style="background:#fff" onclick="document.getElementById('interface').style.display='none'">RETOUR</button>
-    </div>
+<div id="app-container">
+    <h2>Vérification VIP...</h2>
 </div>
 
 <script>
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    let pid = localStorage.getItem('pid') || tg.initDataUnsafe?.user?.id;
-
-    async function verify() {
-        if(!pid) { pid = prompt("Entrez votre ID 1win :"); localStorage.setItem('pid', pid); }
-        
-        const res = await fetch('/verifier-vip', {
+    // 1. Vérification automatique au démarrage
+    async function verifierVIP() {
+        const player_id = "ID_UTILISATEUR"; // Dans Telegram, récupère l'ID réel via WebApp
+        const response = await fetch('/verifier-vip', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ player_id: pid })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ player_id: player_id })
         });
 
-        if (res.status === 200) {
-            document.getElementById('app-loader').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
+        if (response.status === 200) {
+            afficherInterface();
         } else {
-            document.getElementById('app-loader').innerHTML = "<h1>ACCÈS NON VALIDÉ</h1><p>Veuillez contacter l'admin.</p>";
+            document.getElementById('app-container').innerHTML = "<h2>❌ Accès refusé</h2><p>Veuillez contacter l'admin pour valider votre compte.</p>";
         }
     }
-    verify();
 
-    // Ton code original de calcul
-    const config = {"Lucky Jet": {"cycle": 4, "fiabilite": 1.5}, "Rocket Queen": {"cycle": 3, "fiabilite": 2.0}, "1win Crash": {"cycle": 3, "fiabilite": 2.0}, "Tropicana": {"cycle": 5, "fiabilite": 2.0}, "Fortune Crash": {"cycle": 7, "fiabilite": 2.0}, "Meta Crash": {"cycle": 6, "fiabilite": 2.0}, "Empire Crime": {"cycle": 6, "fiabilite": 2.0}, "Astronaut": {"cycle": 5, "fiabilite": 2.0}, "Aviator": {"cycle": 4, "fiabilite": 2.0}};
-    let jeu = "";
-    function ouvrir(n) { jeu = n; document.getElementById('titre').innerText = n; document.getElementById('interface').style.display = 'block'; }
+    function afficherInterface() {
+        document.getElementById('app-container').innerHTML = `
+            <div id="interface">
+                <h2 id="titre">Signal</h2>
+                <div id="res" class="box" style="display:none;">
+                    <p>Cote cible</p>
+                    <div id="cote" style="font-size:32px; color:#00ffcc; font-weight:bold;">--</div>
+                    <p>Début du signal: <span id="heure">--</span></p>
+                    <p>Fiabilité: <span id="fiab">--</span></p>
+                </div>
+                <button class="btn" style="background:#00ffcc" onclick="calc()">DEMANDER SIGNAL</button>
+            </div>
+        `;
+    }
+
+    // Logique de cycle (30s pour Lucky, 50s pour les autres)
     function calc() {
-        const cfg = config[jeu];
-        const cycleEnSecondes = cfg.cycle * 60;
+        const jeu = "Lucky Jet"; // À adapter dynamiquement selon le jeu cliqué
+        const sFixe = (jeu === 'Lucky Jet') ? 30 : 50;
+        const cycleEnSecondes = 4 * 60; // 4 minutes
+        
         const now = Math.floor(Date.now() / 1000);
         const prochainTs = Math.ceil(now / cycleEnSecondes) * cycleEnSecondes;
         const d = new Date(prochainTs * 1000);
+        d.setUTCSeconds(sFixe);
+
         document.getElementById('res').style.display = 'block';
-        document.getElementById('cote').innerText = (Math.abs(Math.sin(prochainTs) * 15) + 1.2).toFixed(2) + "x";
-        document.getElementById('heure').innerText = d.getUTCHours().toString().padStart(2,'0') + ":" + d.getUTCMinutes().toString().padStart(2,'0') + " UTC";
-        document.getElementById('fiab').innerText = cfg.fiabilite.toFixed(1);
+        document.getElementById('cote').innerText = (Math.random() * (15 - 2) + 2).toFixed(2) + "x";
+        document.getElementById('heure').innerText = d.getUTCHours().toString().padStart(2,'0') + ":" + d.getUTCMinutes().toString().padStart(2,'0') + ":" + sFixe + " UTC";
+        document.getElementById('fiab').innerText = "2.0";
     }
+
+    verifierVIP();
 </script>
 </body>
 </html>
