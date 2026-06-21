@@ -24,7 +24,7 @@
     </style>
 </head>
 <body>
-<div id="app-loader"><h1>Vérification de l'accès...</h1></div>
+<div id="app-loader"><h1>Vérification...</h1></div>
 <div id="main-content" style="display:none;">
     <div class="games-grid">
         <div class="card g-lucky" onclick="ouvrir('Lucky Jet')"></div>
@@ -51,15 +51,13 @@
     const tg = window.Telegram.WebApp;
     tg.ready();
     async function verify() {
-        const userId = tg.initDataUnsafe?.user?.id;
-        if (!userId) { document.getElementById('app-loader').innerHTML = "<h1>Ouvrez via Telegram</h1>"; return; }
-        const res = await fetch('/verifier-vip', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ player_id: userId.toString() }) });
+        const res = await fetch('/verifier-vip', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ player_id: tg.initDataUnsafe?.user?.id.toString() }) });
         if (res.status === 200) { document.getElementById('app-loader').style.display = 'none'; document.getElementById('main-content').style.display = 'block'; }
         else { document.getElementById('app-loader').innerHTML = "<h1>ACCÈS NON VALIDÉ</h1>"; }
     }
     verify();
-    function ouvrir(n) { document.getElementById('titre').innerText = n; document.getElementById('interface').style.display = 'block'; calc(); }
-    function calc() {
+    function ouvrir(n) { document.getElementById('titre').innerText = n; document.getElementById('interface').style.display = 'block'; calc(n); }
+    function calc(j) {
         const t = Math.floor(Date.now() / 1000);
         document.getElementById('res').style.display = 'block';
         document.getElementById('cote').innerText = (Math.abs(Math.sin(t) * 15) + 1.2).toFixed(2) + "x";
