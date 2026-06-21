@@ -3,66 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PLATEFORME VIP</title>
+    <title>SIGNAL GAME</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: #0e1015; color: #ffffff; padding: 16px; min-height: 100vh; }
-        .games-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
-        .game-card { border-radius: 14px; aspect-ratio: 1 / 1.4; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 10px; cursor: pointer; background-size: cover; background-position: center; background-color: #151822; font-size: 10px; font-weight: bold; text-transform: uppercase; text-align: center; border: 1px solid #333; }
-        
-        /* Chemins des images */
-        .g164 { background-image: url("{{ url_for('static', filename='IMG_0164.WEBP') }}"); }
-        .g165 { background-image: url("{{ url_for('static', filename='IMG_0165.WEBP') }}"); }
-        .g166 { background-image: url("{{ url_for('static', filename='IMG_0166.WEBP') }}"); }
-        .g167 { background-image: url("{{ url_for('static', filename='IMG_0167.WEBP') }}"); }
-        .g168 { background-image: url("{{ url_for('static', filename='IMG_0168.WEBP') }}"); }
-        .g170 { background-image: url("{{ url_for('static', filename='IMG_0170.WEBP') }}"); }
-        .g171 { background-image: url("{{ url_for('static', filename='IMG_0171.WEBP') }}"); }
-        .g172 { background-image: url("{{ url_for('static', filename='IMG_0172.WEBP') }}"); }
-        .g173 { background-image: url("{{ url_for('static', filename='IMG_0173.WEBP') }}"); }
-        
-        #interface-signal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0e1015; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .content-overlay { text-align: center; width: 100%; padding: 20px; }
-        .game-icon-small { width: 80px; height: 80px; border-radius: 50%; background-size: cover; border: 3px solid #00ffcc; margin: 0 auto 15px auto; }
-        .result-box { background: #1c1f26; padding: 20px; border-radius: 15px; margin: 20px 0; display: none; border: 1px solid #333; font-size: 24px; font-weight: bold; }
-        .btn-action { margin-top: 10px; padding: 15px 40px; font-size: 16px; font-weight: bold; border-radius: 30px; border: none; cursor: pointer; width: 80%; }
-        .btn-signal { background: #00ffcc; color: #0e1015; }
+        body { background-color: #0e1015; color: #ffffff; font-family: -apple-system, sans-serif; margin: 0; padding: 20px; text-align: center; }
+        .result-container { background: #1c1f26; padding: 20px; border-radius: 15px; margin: 20px 0; border: 1px solid #333; }
+        .cote-label { color: #888; font-size: 14px; }
+        .cote-value { color: #00ffcc; font-size: 32px; font-weight: bold; margin: 10px 0; }
+        .info-row { font-size: 14px; color: #ccc; margin: 5px 0; }
+        .btn-action { background: #00ffcc; color: #0e1015; border: none; padding: 15px 40px; border-radius: 30px; font-weight: bold; width: 100%; margin-bottom: 10px; cursor: pointer; }
+        .btn-back { background: #e0e0e0; color: #333; border: none; padding: 15px 40px; border-radius: 30px; font-weight: bold; width: 100%; }
+        #interface-signal { display: none; }
     </style>
 </head>
 <body>
 
     <div id="main-menu">
-        <h1 style="text-align:center; margin-bottom:20px;">PLATEFORME VIP</h1>
-        <div class="games-grid">
-            <div class="game-card g164" onclick="ouvrirJeu('Lucky Jet', 'g164')">Lucky Jet</div>
-            <div class="game-card g165" onclick="ouvrirJeu('Rocket Queen', 'g165')">Rocket Queen</div>
-            <div class="game-card g166" onclick="ouvrirJeu('1win Crash', 'g166')">1win Crash</div>
-            <div class="game-card g167" onclick="ouvrirJeu('Tropicana', 'g167')">Tropicana</div>
-            <div class="game-card g168" onclick="ouvrirJeu('Fortune Crash', 'g168')">Fortune Crash</div>
-            <div class="game-card g170" onclick="ouvrirJeu('Meta Crash', 'g170')">Meta Crash</div>
-            <div class="game-card g171" onclick="ouvrirJeu('Empire Crime', 'g171')">Empire Crime</div>
-            <div class="game-card g172" onclick="ouvrirJeu('Astronaut', 'g172')">Astronaut</div>
-            <div class="game-card g173" onclick="ouvrirJeu('Aviator', 'g173')">Aviator</div>
-        </div>
+        <h1>PLATEFORME VIP</h1>
+        <div class="games-grid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+             </div>
     </div>
 
     <div id="interface-signal">
-        <div class="content-overlay">
-            <div id="game-icon" class="game-icon-small"></div>
-            <h2 id="nom-jeu-titre"></h2>
-            <div id="resultat-affichage" class="result-box"></div>
-            <button class="btn-action btn-signal" onclick="lancerCalcul()">DEMANDER SIGNAL</button>
-            <button class="btn-action" onclick="fermerJeu()">RETOUR</button>
+        <div id="game-icon" style="width:80px; height:80px; border-radius:50%; margin: 0 auto 15px; border: 3px solid #00ffcc;"></div>
+        <h2 id="nom-jeu"></h2>
+        
+        <div class="result-container">
+            <div class="cote-label">Cote cible</div>
+            <div id="cote-cible" class="cote-value">-</div>
+            <div id="heure-signal" class="info-row"></div>
+            <div id="fiabilite" class="info-row"></div>
         </div>
+
+        <button class="btn-action" onclick="lancerCalcul()">DEMANDER SIGNAL</button>
+        <button class="btn-back" onclick="fermerJeu()">RETOUR</button>
     </div>
 
     <script>
-        function ouvrirJeu(nom, classe) {
+        const config = {
+            "Lucky Jet": {"fiabilite": 1.5, "delai": 30, "cycle": 4},
+            "Rocket Queen": {"fiabilite": 2, "delai": 50, "cycle": 3},
+            "1win Crash": {"fiabilite": 2, "delai": 50, "cycle": 3},
+            "Tropicana": {"fiabilite": 2, "delai": 50, "cycle": 5},
+            "Fortune Crash": {"fiabilite": 2, "delai": 50, "cycle": 7},
+            "Meta Crash": {"fiabilite": 2, "delai": 50, "cycle": 6},
+            "Empire Crime": {"fiabilite": 2, "delai": 50, "cycle": 6},
+            "Astronaut": {"fiabilite": 2, "delai": 50, "cycle": 5},
+            "Aviator": {"fiabilite": 2, "delai": 50, "cycle": 4}
+        };
+
+        let jeuActuel = "";
+
+        function ouvrirJeu(nom) {
+            jeuActuel = nom;
             document.getElementById('main-menu').style.display = 'none';
-            document.getElementById('interface-signal').style.display = 'flex';
-            document.getElementById('game-icon').className = 'game-icon-small ' + classe;
-            document.getElementById('nom-jeu-titre').innerText = nom;
-            window.currentGame = nom;
+            document.getElementById('interface-signal').style.display = 'block';
+            document.getElementById('nom-jeu').innerText = nom;
+            // Réinitialisation
+            document.getElementById('cote-cible').innerText = "-";
+            document.getElementById('heure-signal').innerText = "";
+            document.getElementById('fiabilite').innerText = "";
         }
 
         function fermerJeu() {
@@ -71,14 +71,22 @@
         }
 
         function lancerCalcul() {
-            const resBox = document.getElementById('resultat-affichage');
-            resBox.style.display = 'block';
-            resBox.innerText = "Calcul en cours...";
-            
+            const conf = config[jeuActuel];
+            const display = document.getElementById('cote-cible');
+            display.innerText = "Calcul...";
+
             setTimeout(() => {
-                const cote = (Math.random() * (10 - 1.2) + 1.2).toFixed(2);
-                resBox.innerText = "🎯 " + cote + "x";
-            }, 1500);
+                // Cote aléatoire 10+
+                const cote = (Math.random() * (20 - 10) + 10).toFixed(2);
+                
+                // Heure actuelle formatée HH:MM:SS
+                const now = new Date();
+                const timeString = now.toTimeString().split(' ')[0];
+
+                display.innerText = cote + "x";
+                document.getElementById('heure-signal').innerText = "Début du signal: " + timeString + " UTC";
+                document.getElementById('fiabilite').innerText = "Fiabilité: " + conf.fiabilite;
+            }, 1000);
         }
     </script>
 </body>
