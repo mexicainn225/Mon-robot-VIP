@@ -6,20 +6,23 @@
     <title>PLATEFORME VIP</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* --- DESIGN GLOBAL --- */
+        /* Design Global */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
-        body { background-color: #0e1015; color: #ffffff; padding: 16px; min-height: 100vh; display: flex; flex-direction: column; }
+        body { background-color: #0e1015; color: #ffffff; padding: 16px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         
-        /* --- GRILLE DES JEUX --- */
+        /* Menu caché par défaut */
+        #main-menu { display: none; width: 100%; }
+        
+        /* Grille des jeux */
         .games-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
-        .game-card { border-radius: 14px; aspect-ratio: 1 / 1.4; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 10px; cursor: pointer; background-size: cover; background-position: center; background-color: #151822; font-size: 10px; font-weight: bold; text-transform: uppercase; text-align: center; }
+        .game-card { border-radius: 14px; aspect-ratio: 1 / 1.4; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 10px; cursor: pointer; background-color: #151822; font-size: 10px; font-weight: bold; text-transform: uppercase; text-align: center; border: 1px solid #333; }
         
-        /* --- INTERFACE SIGNAL --- */
-        #interface-signal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0e1015; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .game-icon-small { width: 80px; height: 80px; border-radius: 50%; background-size: cover; border: 3px solid #00ffcc; margin-bottom: 15px; }
+        /* Interface Signal */
+        #interface-signal { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
+        .game-icon-small { width: 80px; height: 80px; border-radius: 50%; background-color: #333; border: 3px solid #00ffcc; margin-bottom: 15px; }
         .result-box { background: #1c1f26; padding: 20px; border-radius: 15px; margin: 20px 0; border: 1px solid #333; font-size: 24px; font-weight: bold; min-width: 200px; text-align: center; }
         
-        /* --- BOUTONS --- */
+        /* Boutons */
         .btn-action { margin-top: 10px; padding: 15px 30px; font-size: 16px; font-weight: bold; border-radius: 30px; border: none; cursor: pointer; width: 80%; }
         .btn-signal { background: #00ffcc; color: #0e1015; }
         .btn-back { background: #333; color: white; }
@@ -27,18 +30,18 @@
 </head>
 <body>
 
-    <div id="main-menu" style="display:none;">
-        <h1 style="text-align:center;">PLATEFORME VIP</h1>
+    <div id="main-menu">
+        <h1 style="text-align:center; margin-bottom: 20px;">PLATEFORME VIP</h1>
         <div class="games-grid">
-            <div class="game-card g164" onclick="ouvrirJeu('Lucky Jet', 'g164')">Lucky Jet</div>
-            <div class="game-card g165" onclick="ouvrirJeu('Rocket Queen', 'g165')">Rocket Queen</div>
-            <div class="game-card g166" onclick="ouvrirJeu('1win Crash', 'g166')">1win Crash</div>
-            <div class="game-card g167" onclick="ouvrirJeu('Tropicana', 'g167')">Tropicana</div>
-            <div class="game-card g168" onclick="ouvrirJeu('Fortune Crash', 'g168')">Fortune Crash</div>
-            <div class="game-card g170" onclick="ouvrirJeu('Meta Crash', 'g170')">Meta Crash</div>
-            <div class="game-card g171" onclick="ouvrirJeu('Empire Crime', 'g171')">Empire Crime</div>
-            <div class="game-card g172" onclick="ouvrirJeu('Astronaut', 'g172')">Astronaut</div>
-            <div class="game-card g173" onclick="ouvrirJeu('Aviator', 'g173')">Aviator</div>
+            <div class="game-card" onclick="ouvrirJeu('Lucky Jet')">Lucky Jet</div>
+            <div class="game-card" onclick="ouvrirJeu('Rocket Queen')">Rocket Queen</div>
+            <div class="game-card" onclick="ouvrirJeu('1win Crash')">1win Crash</div>
+            <div class="game-card" onclick="ouvrirJeu('Tropicana')">Tropicana</div>
+            <div class="game-card" onclick="ouvrirJeu('Fortune Crash')">Fortune Crash</div>
+            <div class="game-card" onclick="ouvrirJeu('Meta Crash')">Meta Crash</div>
+            <div class="game-card" onclick="ouvrirJeu('Empire Crime')">Empire Crime</div>
+            <div class="game-card" onclick="ouvrirJeu('Astronaut')">Astronaut</div>
+            <div class="game-card" onclick="ouvrirJeu('Aviator')">Aviator</div>
         </div>
     </div>
 
@@ -51,31 +54,38 @@
     </div>
 
     <script>
-        // 1. Vérification VIP
+        // Vérification avec mémorisation
         async function verifierVIP() {
-            const playerId = prompt("Entrez votre ID joueur pour accéder :");
-            if (!playerId) return verifierVIP();
+            let playerId = localStorage.getItem('userPlayerId');
 
-            const res = await fetch('/verifier-vip', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({player_id: playerId})
-            });
+            if (!playerId) {
+                playerId = prompt("Entrez votre ID joueur :");
+                if (!playerId) { document.body.innerHTML = "<h1>ACCÈS REQUIS</h1>"; return; }
+            }
 
-            if (res.status === 200) {
-                document.getElementById('main-menu').style.display = 'block';
-            } else {
-                document.body.innerHTML = "<h1 style='text-align:center; margin-top:50px;'>ACCÈS REFUSÉ</h1><p style='text-align:center;'>ID invalide ou non activé.</p>";
+            try {
+                const res = await fetch('/verifier-vip', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({player_id: playerId})
+                });
+
+                if (res.status === 200) {
+                    localStorage.setItem('userPlayerId', playerId);
+                    document.getElementById('main-menu').style.display = 'block';
+                } else {
+                    localStorage.removeItem('userPlayerId');
+                    document.body.innerHTML = "<h1 style='color:red; text-align:center;'>ACCÈS REFUSÉ</h1>";
+                }
+            } catch (e) {
+                document.body.innerHTML = "<h1 style='text-align:center;'>Erreur de connexion.</h1>";
             }
         }
 
-        // 2. Navigation
-        function ouvrirJeu(nom, classe) {
+        function ouvrirJeu(nom) {
             document.getElementById('main-menu').style.display = 'none';
             document.getElementById('interface-signal').style.display = 'flex';
-            document.getElementById('game-icon').className = 'game-icon-small ' + classe;
             document.getElementById('nom-jeu-titre').innerText = nom;
-            window.currentGame = nom;
         }
 
         function fermerJeu() {
@@ -85,18 +95,13 @@
 
         function lancerCalcul() {
             const resBox = document.getElementById('resultat-affichage');
-            resBox.style.display = 'block';
             resBox.innerText = "Calcul en cours...";
-            
-            // Simuler un calcul
             setTimeout(() => {
-                const cote = (Math.random() * (10 - 1.2) + 1.2).toFixed(2);
-                resBox.innerText = "🎯 " + cote + "x";
+                resBox.innerText = "🎯 " + (Math.random() * (10 - 1.2) + 1.2).toFixed(2) + "x";
             }, 1500);
         }
 
-        // Lancement
-        verifierVIP();
+        window.onload = verifierVIP;
     </script>
 </body>
 </html>
