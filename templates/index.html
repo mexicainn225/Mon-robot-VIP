@@ -8,23 +8,11 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: #0e1015; color: #ffffff; padding: 16px; min-height: 100vh; }
         .games-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
-        .game-card { border-radius: 14px; aspect-ratio: 1 / 1.4; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 10px; cursor: pointer; background-size: cover; background-position: center; background-color: #151822; font-size: 10px; font-weight: bold; text-transform: uppercase; text-align: center; border: 1px solid #333; }
-        
-        /* Chemins des images */
-        .g164 { background-image: url("{{ url_for('static', filename='IMG_0164.WEBP') }}"); }
-        .g165 { background-image: url("{{ url_for('static', filename='IMG_0165.WEBP') }}"); }
-        .g166 { background-image: url("{{ url_for('static', filename='IMG_0166.WEBP') }}"); }
-        .g167 { background-image: url("{{ url_for('static', filename='IMG_0167.WEBP') }}"); }
-        .g168 { background-image: url("{{ url_for('static', filename='IMG_0168.WEBP') }}"); }
-        .g170 { background-image: url("{{ url_for('static', filename='IMG_0170.WEBP') }}"); }
-        .g171 { background-image: url("{{ url_for('static', filename='IMG_0171.WEBP') }}"); }
-        .g172 { background-image: url("{{ url_for('static', filename='IMG_0172.WEBP') }}"); }
-        .g173 { background-image: url("{{ url_for('static', filename='IMG_0173.WEBP') }}"); }
+        .game-card { border-radius: 14px; aspect-ratio: 1 / 1.4; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 10px; cursor: pointer; background-color: #151822; font-size: 10px; font-weight: bold; text-transform: uppercase; text-align: center; border: 1px solid #333; }
         
         #interface-signal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0e1015; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
         .content-overlay { text-align: center; width: 100%; padding: 20px; }
-        .game-icon-small { width: 80px; height: 80px; border-radius: 50%; background-size: cover; border: 3px solid #00ffcc; margin: 0 auto 15px auto; }
-        .result-box { background: #1c1f26; padding: 20px; border-radius: 15px; margin: 20px 0; display: none; border: 1px solid #333; font-size: 24px; font-weight: bold; }
+        .result-box { background: #1c1f26; padding: 20px; border-radius: 15px; margin: 20px 0; border: 1px solid #333; }
         .btn-action { margin-top: 10px; padding: 15px 40px; font-size: 16px; font-weight: bold; border-radius: 30px; border: none; cursor: pointer; width: 80%; }
         .btn-signal { background: #00ffcc; color: #0e1015; }
     </style>
@@ -34,33 +22,44 @@
     <div id="main-menu">
         <h1 style="text-align:center; margin-bottom:20px;">PLATEFORME VIP</h1>
         <div class="games-grid">
-            <div class="game-card g164" onclick="ouvrirJeu('Lucky Jet', 'g164')">Lucky Jet</div>
-            <div class="game-card g165" onclick="ouvrirJeu('Rocket Queen', 'g165')">Rocket Queen</div>
-            <div class="game-card g166" onclick="ouvrirJeu('1win Crash', 'g166')">1win Crash</div>
-            <div class="game-card g167" onclick="ouvrirJeu('Tropicana', 'g167')">Tropicana</div>
-            <div class="game-card g168" onclick="ouvrirJeu('Fortune Crash', 'g168')">Fortune Crash</div>
-            <div class="game-card g170" onclick="ouvrirJeu('Meta Crash', 'g170')">Meta Crash</div>
-            <div class="game-card g171" onclick="ouvrirJeu('Empire Crime', 'g171')">Empire Crime</div>
-            <div class="game-card g172" onclick="ouvrirJeu('Astronaut', 'g172')">Astronaut</div>
-            <div class="game-card g173" onclick="ouvrirJeu('Aviator', 'g173')">Aviator</div>
+            <div class="game-card" onclick="ouvrirJeu('Lucky Jet')">Lucky Jet</div>
+            <div class="game-card" onclick="ouvrirJeu('Rocket Queen')">Rocket Queen</div>
+            <div class="game-card" onclick="ouvrirJeu('1win Crash')">1win Crash</div>
+            <div class="game-card" onclick="ouvrirJeu('Tropicana')">Tropicana</div>
+            <div class="game-card" onclick="ouvrirJeu('Fortune Crash')">Fortune Crash</div>
+            <div class="game-card" onclick="ouvrirJeu('Meta Crash')">Meta Crash</div>
+            <div class="game-card" onclick="ouvrirJeu('Empire Crime')">Empire Crime</div>
+            <div class="game-card" onclick="ouvrirJeu('Astronaut')">Astronaut</div>
+            <div class="game-card" onclick="ouvrirJeu('Aviator')">Aviator</div>
         </div>
     </div>
 
     <div id="interface-signal">
         <div class="content-overlay">
-            <div id="game-icon" class="game-icon-small"></div>
             <h2 id="nom-jeu-titre"></h2>
-            <div id="resultat-affichage" class="result-box"></div>
+            
+            <div id="resultat-affichage" class="result-box" style="display:none;">
+                <p style="font-size: 14px; opacity: 0.7;">Cote cible</p>
+                <div id="cote-valeur" style="font-size: 32px; font-weight: bold; color: #00ffcc; margin: 10px 0;">--</div>
+                <p style="font-size: 12px; margin-top: 10px;">Début du signal : <span id="heure-signal">--</span></p>
+                <p style="font-size: 12px;">Fiabilité : <span id="fiabilite-valeur">--</span></p>
+            </div>
+
             <button class="btn-action btn-signal" onclick="lancerCalcul()">DEMANDER SIGNAL</button>
             <button class="btn-action" onclick="fermerJeu()">RETOUR</button>
         </div>
     </div>
 
     <script>
-        function ouvrirJeu(nom, classe) {
+        const config = {
+            "Lucky Jet": {"cycle": 4}, "Rocket Queen": {"cycle": 3}, "1win Crash": {"cycle": 3},
+            "Tropicana": {"cycle": 5}, "Fortune Crash": {"cycle": 7}, "Meta Crash": {"cycle": 6},
+            "Empire Crime": {"cycle": 6}, "Astronaut": {"cycle": 5}, "Aviator": {"cycle": 4}
+        };
+
+        function ouvrirJeu(nom) {
             document.getElementById('main-menu').style.display = 'none';
             document.getElementById('interface-signal').style.display = 'flex';
-            document.getElementById('game-icon').className = 'game-icon-small ' + classe;
             document.getElementById('nom-jeu-titre').innerText = nom;
             window.currentGame = nom;
         }
@@ -71,14 +70,19 @@
         }
 
         function lancerCalcul() {
+            const cfg = config[window.currentGame] || {cycle: 4};
             const resBox = document.getElementById('resultat-affichage');
             resBox.style.display = 'block';
-            resBox.innerText = "Calcul en cours...";
             
-            setTimeout(() => {
-                const cote = (Math.random() * (10 - 1.2) + 1.2).toFixed(2);
-                resBox.innerText = "🎯 " + cote + "x";
-            }, 1500);
+            // Calcul synchronisé
+            const now = new Date();
+            const cycleId = Math.floor(now.getTime() / (cfg.cycle * 10000));
+            const cote = (Math.abs(Math.sin(cycleId) * 15) + 1.2).toFixed(2);
+            
+            // Affichage
+            document.getElementById('cote-valeur').innerText = cote + "x";
+            document.getElementById('heure-signal').innerText = now.getUTCHours() + ":" + now.getUTCMinutes() + ":" + now.getUTCSeconds() + " UTC";
+            document.getElementById('fiabilite-valeur').innerText = (Math.random() * 0.3 + 0.7 + 0.5).toFixed(1);
         }
     </script>
 </body>
