@@ -14,7 +14,7 @@ users_col = db['users']
 
 TOKEN = os.environ.get("TOKEN")
 ADMIN_ID = "5724620019"
-WEBAPP_URL = "https://mon-robot-vip-1.onrender.com" 
+WEBAPP_URL = "https://ton-service.onrender.com" 
 
 # --- SERVEUR WEB ---
 @app.route('/')
@@ -30,7 +30,7 @@ def verifier_vip():
 def run_web(): app.run(host='0.0.0.0', port=10000)
 Thread(target=run_web, daemon=True).start()
 
-# --- BOUTON DE MENU PERMANENT ---
+# --- CONFIGURATION DU BOUTON MENU FIXE ---
 async def set_menu_button(bot):
     web_app = WebAppInfo(url=WEBAPP_URL)
     menu_button = MenuButtonWebApp(text="GAME HACK 🚀", web_app=web_app)
@@ -66,20 +66,15 @@ async def button_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data.startswith("val_"):
         users_col.update_one({"telegram_id": user_id}, {"$set": {"is_vip": True}})
         await query.edit_message_text(f"✅ Utilisateur {user_id} validé.")
-        await context.bot.send_message(user_id, "🎉 Accès VIP activé ! Utilise le bouton 'GAME HACK 🚀' en bas.")
+        await context.bot.send_message(user_id, "🎉 Accès VIP activé ! Tu peux maintenant utiliser le bouton GAME HACK en bas.")
     else:
         await query.edit_message_text(f"❌ Utilisateur {user_id} refusé.")
 
 if __name__ == '__main__':
     bot_app = ApplicationBuilder().token(TOKEN).build()
     
-    # Correction pour le loop d'événements sur Render
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        
+    # Configuration du bouton de menu fixe au démarrage
+    loop = asyncio.get_event_loop()
     loop.run_until_complete(set_menu_button(bot_app.bot))
     
     bot_app.add_handler(CommandHandler("start", start))
