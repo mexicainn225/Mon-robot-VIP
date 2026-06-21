@@ -41,43 +41,23 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=lo
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = (
         "🚀 **BIENVENUE SUR SIGNAL MEXICAIN** 🇨🇮\n\n"
-        "Gagnez en toute sérénité avec nos signaux exclusifs !\n\n"
-        "**Comment activer votre accès ?**\n"
-        "1️⃣ Inscrivez-vous sur : https://lkbb.cc/78634e\n"
-        "2️⃣ Utilisez le code promo : **COK225**\n"
-        "3️⃣ Rechargez votre compte.\n"
-        "4️⃣ Envoyez votre **ID Joueur** dans ce bot pour validation.\n\n"
-        "*Votre compte sera activé par l'administrateur après vérification.*"
+        "Envoyez votre **ID Joueur** pour validation."
     )
     await update.message.reply_text(msg, parse_mode='Markdown')
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     user_id = str(update.effective_user.id)
-    username = update.effective_user.username or "Inconnu"
-
-    # Vérification si déjà VIP
-    user = users_col.find_one({"telegram_id": user_id})
-    if user and user.get('is_vip'):
-        await update.message.reply_text("✅ Vous êtes déjà membre VIP ! Accédez à la Web App.")
-        return
-
-    # Si le message est un ID (chiffres seulement)
+    
     if text.isdigit() and len(text) > 5:
-        # Enregistrement de l'ID Joueur dans la base de données
         users_col.update_one(
             {"telegram_id": user_id}, 
             {"$set": {"player_id": text, "is_vip": False}}, 
             upsert=True
         )
-        
-        await context.bot.send_message(
-            chat_id=ADMIN_ID,
-            text=f"🔔 **Nouvelle demande d'activation**\n\n👤 Utilisateur : @{username} (ID: {user_id})\n🆔 ID Joueur : `{text}`\n\n👉 Utilisez `/valider {user_id}` pour confirmer."
-        )
-        await update.message.reply_text("⏳ **Demande envoyée !**\n\nL'administrateur va vérifier votre inscription et valider votre accès sous peu. Patience...")
+        await update.message.reply_text("⏳ Demande envoyée à l'administrateur.")
     else:
-        await update.message.reply_text("❌ **Format invalide.**\n\nEnvoyez simplement votre **ID de joueur** (ex: 987654321) pour être activé.")
+        await update.message.reply_text("❌ Format invalide. Envoyez votre ID joueur.")
 
 async def valider_joueur(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if str(update.effective_user.id) != ADMIN_ID: return
@@ -85,13 +65,6 @@ async def valider_joueur(update: Update, context: ContextTypes.DEFAULT_TYPE):
         target_id = context.args[0]
         users_col.update_one({"telegram_id": target_id}, {"$set": {"is_vip": True}})
         await update.message.reply_text(f"✅ Joueur {target_id} activé.")
-        
-        try:
-            await context.bot.send_message(chat_id=target_id, text="🎉 **Félicitations !** Votre accès VIP est confirmé. Vous pouvez maintenant accéder aux signaux.")
-        except:
-            pass
-    else:
-        await update.message.reply_text("❌ Utilisation : /valider [ID_TELEGRAM]")
 
 if __name__ == '__main__':
     bot_app = ApplicationBuilder().token(TOKEN).build()
