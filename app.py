@@ -6,6 +6,7 @@ from flask import Flask, request, jsonify, render_template
 from threading import Thread
 from pymongo import MongoClient
 
+# --- CONFIGURATION ---
 app = Flask(__name__, template_folder='templates')
 client = MongoClient(os.environ.get("MONGO_URI"))
 db = client['plateforme_db']
@@ -15,24 +16,27 @@ TOKEN = os.environ.get("TOKEN")
 ADMIN_ID = "5724620019"
 WEBAPP_URL = "https://mon-robot-vip-1.onrender.com" 
 
+# --- SERVEUR WEB ---
 @app.route('/')
 def home(): return render_template('index.html')
 
 @app.route('/verifier-vip', methods=['POST'])
 def verifier_vip():
     data = request.json
-    identifiant = str(data.get('player_id'))
-    # Recherche flexible : accepte soit l'ID Telegram soit le Player ID
-    user = users_col.find_one({"$or": [{"player_id": identifiant}, {"telegram_id": identifiant}]})
+    player_id = str(data.get('player_id'))
+    user = users_col.find_one({"player_id": player_id})
     return jsonify({"status": "VIP" if user and user.get('is_vip') else "NON_VIP"}), 200 if user and user.get('is_vip') else 403
 
 def run_web(): app.run(host='0.0.0.0', port=10000)
 Thread(target=run_web, daemon=True).start()
 
+# --- BOUTON DE MENU PERMANENT ---
 async def set_menu_button(bot):
     web_app = WebAppInfo(url=WEBAPP_URL)
-    await bot.set_chat_menu_button(menu_button=MenuButtonWebApp(text="GAME HACK 🚀", web_app=web_app))
+    menu_button = MenuButtonWebApp(text="GAME HACK 🚀", web_app=web_app)
+    await bot.set_chat_menu_button(menu_button=menu_button)
 
+# --- BOT TELEGRAM ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     welcome_text = (
         "🚀 **BIENVENUE SUR SIGNAL MEXICAIN 🇨🇮**\n\n"
@@ -52,13 +56,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if text.isdigit() and len(text) > 5:
         users_col.update_one({"telegram_id": user_id}, {"$set": {"player_id": text, "is_vip": False}}, upsert=True)
         keyboard = [[InlineKeyboardButton("✅ Confirmer", callback_data=f"val_{user_id}"), InlineKeyboardButton("❌ Refuser", callback_data=f"ref_{user_id}")]]
-        await context.bot.send_message(ADMIN_ID, f"🔔 Demande ID: `{text}`\nUser: {update.effective_user.username}", reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
+        await context.bot.send_message(ADMIN_ID, f"🔔 Nouvelle demande ID: `{text}`\nUser: {update.effective_user.username}", reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
         await update.message.reply_text("⏳ Demande envoyée, patientez.")
 
 async def button_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    user_id = query.data.split("_")[1]
-    if query.data.startswith("val_"):
+    data = query.data
+    user_id = data.split("_")[1]
+    if data.startswith("val_"):
         users_col.update_one({"telegram_id": user_id}, {"$set": {"is_vip": True}})
         await query.edit_message_text(f"✅ Utilisateur {user_id} validé.")
         await context.bot.send_message(user_id, "🎉 Accès VIP activé ! Utilise le bouton 'GAME HACK 🚀' en bas.")
@@ -67,12 +72,16 @@ async def button_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 if __name__ == '__main__':
     bot_app = ApplicationBuilder().token(TOKEN).build()
+    
+    # Correction pour le loop d'événements sur Render
     try:
         loop = asyncio.get_event_loop()
     except RuntimeError:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
+        
     loop.run_until_complete(set_menu_button(bot_app.bot))
+    
     bot_app.add_handler(CommandHandler("start", start))
     bot_app.add_handler(CallbackQueryHandler(button_query))
     bot_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
