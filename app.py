@@ -12,9 +12,12 @@ TOKEN = os.environ.get("TOKEN")
 MONGO_URI = os.environ.get("MONGO_URI")
 ADMIN_ID = "5724620019" 
 
-client = MongoClient(MONGO_URI)
+# Connexion MongoDB avec timeout pour la stabilité
+client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
 db = client['plateforme_db']
 users_col = db['users'] 
+
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 # --- SERVEUR WEB ---
 @app.route('/')
@@ -23,12 +26,25 @@ def home():
 
 @app.route('/verifier-vip', methods=['POST'])
 def verifier_vip():
-    data = request.json
-    player_id = str(data.get('player_id'))
-    user = users_col.find_one({"player_id": player_id})
-    if user and user.get('is_vip'):
-        return jsonify({"status": "VIP"}), 200
-    return jsonify({"status": "NON_VIP"}), 403
+    try:
+        data = request.json
+        # Nettoyage strict : on force en string et on enlève les espaces
+        player_id = str(data.get('player_id', '')).strip()
+        
+        if not player_id:
+            return jsonify({"status": "MISSING_ID"}), 400
+
+        user = users_col.find_one({"player_id": player_id})
+        
+        if user and user.get('is_vip') == True:
+            logging.info(f"Accès VIP autorisé pour l'ID: {player_id}")
+            return jsonify({"status": "VIP"}), 200
+            
+        logging.warning(f"Accès refusé pour l'ID: {player_id}")
+        return jsonify({"status": "NON_VIP"}), 403
+    except Exception as e:
+        logging.error(f"Erreur serveur : {e}")
+        return jsonify({"status": "ERROR"}), 500
 
 def run_web(): 
     app.run(host='0.0.0.0', port=10000)
@@ -36,8 +52,6 @@ def run_web():
 Thread(target=run_web, daemon=True).start()
 
 # --- LOGIQUE BOT TELEGRAM ---
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = (
         "🚀 **BIENVENUE SUR SIGNAL MEXICAIN** 🇨🇮\n\n"
@@ -52,7 +66,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(msg, parse_mode='Markdown')
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text
+    text = update.message.text.strip()
     user_id = str(update.effective_user.id)
     username = update.effective_user.username or "Inconnu"
 
@@ -64,7 +78,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Si le message est un ID (chiffres seulement)
     if text.isdigit() and len(text) > 5:
-        # Enregistrement de l'ID Joueur dans la base de données
         users_col.update_one(
             {"telegram_id": user_id}, 
             {"$set": {"player_id": text, "is_vip": False}}, 
@@ -75,9 +88,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             chat_id=ADMIN_ID,
             text=f"🔔 **Nouvelle demande d'activation**\n\n👤 Utilisateur : @{username} (ID: {user_id})\n🆔 ID Joueur : `{text}`\n\n👉 Utilisez `/valider {user_id}` pour confirmer."
         )
-        await update.message.reply_text("⏳ **Demande envoyée !**\n\nL'administrateur va vérifier votre inscription et valider votre accès sous peu. Patience...")
+        await update.message.reply_text("⏳ **Demande envoyée !**\n\nL'administrateur va vérifier votre inscription sous peu.")
     else:
-        await update.message.reply_text("❌ **Format invalide.**\n\nEnvoyez simplement votre **ID de joueur** (ex: 987654321) pour être activé.")
+        await update.message.reply_text("❌ **Format invalide.**\n\nEnvoyez votre **ID de joueur** (ex: 987654321) pour être activé.")
 
 async def valider_joueur(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if str(update.effective_user.id) != ADMIN_ID: return
@@ -85,13 +98,11 @@ async def valider_joueur(update: Update, context: ContextTypes.DEFAULT_TYPE):
         target_id = context.args[0]
         users_col.update_one({"telegram_id": target_id}, {"$set": {"is_vip": True}})
         await update.message.reply_text(f"✅ Joueur {target_id} activé.")
-        
         try:
-            await context.bot.send_message(chat_id=target_id, text="🎉 **Félicitations !** Votre accès VIP est confirmé. Vous pouvez maintenant accéder aux signaux.")
-        except:
-            pass
+            await context.bot.send_message(chat_id=target_id, text="🎉 **Félicitations !** Votre accès VIP est confirmé.")
+        except: pass
     else:
-        await update.message.reply_text("❌ Utilisation : /valider [ID_TELEGRAM]")
+        await update.message.reply_text("❌ Usage : /valider [ID_TELEGRAM]")
 
 if __name__ == '__main__':
     bot_app = ApplicationBuilder().token(TOKEN).build()
