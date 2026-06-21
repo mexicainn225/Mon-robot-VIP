@@ -1,79 +1,92 @@
-import logging
 import os
-from telegram import Update
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
+import logging
+from telegram.ext import ApplicationBuilder, MessageHandler, CommandHandler, filters, ContextTypes
+from flask import Flask, request, jsonify, render_template
+from threading import Thread
 from pymongo import MongoClient
 
 # --- CONFIGURATION ---
-# Utilisation de os.getenv pour la sécurité (à configurer dans les variables d'environnement de Render)
-TOKEN = os.getenv("TELEGRAM_TOKEN")
-# Remplace par ton URL MongoDB (si tu utilises MongoDB Atlas, elle ressemble à mongodb+srv://...)
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
-DB_NAME = "robot_vip_db"
+app = Flask(__name__, template_folder='templates')
 
-# Vérification du token
+# Lecture du TOKEN et de MONGO_URI depuis les variables d'environnement
+TOKEN = os.environ.get("TOKEN")
+MONGO_URI = os.environ.get("MONGO_URI")
+ADMIN_ID = "5724620019"
+
+# Vérification de sécurité du Token
 if not TOKEN:
-    raise ValueError("Le token Telegram n'est pas défini. Vérifie ta variable d'environnement TELEGRAM_TOKEN.")
+    raise ValueError("Le token Telegram n'est pas défini. Vérifie ta variable d'environnement TOKEN dans Render.")
 
-# Connexion MongoDB
 client = MongoClient(MONGO_URI)
-db = client[DB_NAME]
-users_col = db["users"]
+db = client['plateforme_db']
+users_col = db['users'] 
 
-# Logging
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', 
-    level=logging.INFO
-)
+# --- SERVEUR WEB ---
+@app.route('/')
+def home(): 
+    return render_template('index.html')
 
-# --- MESSAGES ---
-WELCOME_MESSAGE = (
-    "🚀 **Bienvenue sur le Robot Signal !**\n\n"
-    "Pour accéder à nos signaux exclusifs et activer votre accès, suivez ces étapes :\n\n"
-    "1️⃣ **Inscrivez-vous** ici : https://lkbb.cc/78634e\n"
-    "2️⃣ **Envoyez-nous votre ID utilisateur** (ID de jeu) pour validation.\n\n"
-    "Code promo : **COK225**"
-)
+@app.route('/verifier-vip', methods=['POST'])
+def verifier_vip():
+    data = request.json
+    player_id = str(data.get('player_id'))
+    user = users_col.find_one({"player_id": player_id})
+    if user and user.get('is_vip'):
+        return jsonify({"status": "VIP"}), 200
+    return jsonify({"status": "NON_VIP"}), 403
 
-# --- FONCTIONS ---
+def run_web(): 
+    app.run(host='0.0.0.0', port=10000)
+
+# Démarrage du serveur web dans un thread séparé
+Thread(target=run_web, daemon=True).start()
+
+# --- BOT TELEGRAM ---
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(WELCOME_MESSAGE, parse_mode='Markdown')
+    msg = (
+        "🚀 **BIENVENUE SUR SIGNAL MEXICAIN** 🇨🇮\n\n"
+        "Gagnez en toute sérénité avec nos signaux exclusifs !\n\n"
+        "Pour activer votre accès, envoyez simplement votre **ID Joueur**."
+    )
+    await update.message.reply_text(msg, parse_mode='Markdown')
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not update.message or not update.message.text:
+    text = update.message.text
+    user_id = str(update.effective_user.id)
+    username = update.effective_user.username or "Inconnu"
+
+    # Vérification si déjà VIP
+    user = users_col.find_one({"telegram_id": user_id})
+    if user and user.get('is_vip'):
+        await update.message.reply_text("✅ Vous êtes déjà membre VIP ! Accédez à la Web App.")
         return
-        
-    user_input = update.message.text.strip()
-    telegram_id = update.message.from_user.id
-    username = update.message.from_user.username
 
-    # Si l'utilisateur envoie un ID (composé uniquement de chiffres)
-    if user_input.isdigit():
-        users_col.update_one(
-            {"telegram_id": telegram_id},
-            {"$set": {
-                "game_id": user_input,
-                "username": username,
-                "status": "pending_verification"
-            }},
-            upsert=True
+    # Processus d'inscription
+    if text.isdigit() and len(text) > 5:
+        users_col.update_one({"telegram_id": user_id}, {"$set": {"player_id": text, "is_vip": False}}, upsert=True)
+        await context.bot.send_message(
+            chat_id=ADMIN_ID,
+            text=f"🔔 **Nouvelle demande d'activation**\n\n👤 Utilisateur : @{username}\n🆔 ID Joueur : `{text}`\n\n👉 Utilisez `/valider {user_id}` pour confirmer."
         )
-        await update.message.reply_text(
-            f"✅ **ID {user_input} bien reçu !**\n\n"
-            "Votre compte est en cours de vérification par notre équipe.\n"
-            "Vous serez notifié dès l'activation."
-        )
+        await update.message.reply_text("⏳ **Demande envoyée !** L'administrateur validera votre accès sous peu.")
     else:
-        await update.message.reply_text("❌ Veuillez envoyer un ID de jeu valide (chiffres uniquement).")
+        await update.message.reply_text("❌ **Format invalide.** Envoyez votre ID de joueur (ex: 987654321).")
 
-# --- LANCEMENT ---
+async def valider_joueur(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if str(update.effective_user.id) != ADMIN_ID: return
+    if context.args:
+        target_id = context.args[0]
+        users_col.update_one({"telegram_id": target_id}, {"$set": {"is_vip": True}})
+        await update.message.reply_text(f"✅ Joueur {target_id} activé.")
+        try:
+            await context.bot.send_message(chat_id=target_id, text="🎉 **Félicitations !** Votre accès VIP est confirmé.")
+        except: pass
+
 if __name__ == '__main__':
-    # Initialisation du bot
-    app = ApplicationBuilder().token(TOKEN).build()
-    
-    # Handlers
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
-    
-    print("Bot démarré avec succès...")
-    app.run_polling()
+    bot_app = ApplicationBuilder().token(TOKEN).build()
+    bot_app.add_handler(CommandHandler("start", start))
+    bot_app.add_handler(CommandHandler("valider", valider_joueur))
+    bot_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    bot_app.run_polling()
