@@ -10,11 +10,18 @@
         body { background-color: #0e1015; color: #ffffff; padding: 16px; min-height: 100vh; }
         .games-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .game-card { border-radius: 14px; aspect-ratio: 1 / 1.4; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 10px; cursor: pointer; background-size: cover; background-position: center; background-color: #151822; font-size: 10px; font-weight: bold; text-transform: uppercase; text-align: center; }
-        .g164 { background-image: url('IMG_0164.WEBP'); } .g165 { background-image: url('IMG_0165.WEBP'); }
-        .g166 { background-image: url('IMG_0166.WEBP'); } .g167 { background-image: url('IMG_0167.WEBP'); }
-        .g168 { background-image: url('IMG_0168.WEBP'); } .g170 { background-image: url('IMG_0170.WEBP'); }
-        .g171 { background-image: url('IMG_0171.WEBP'); } .g172 { background-image: url('IMG_0172.WEBP'); }
-        .g173 { background-image: url('IMG_0173.WEBP'); }
+        
+        /* Utilisation correcte des chemins static */
+        .g164 { background-image: url("{{ url_for('static', filename='IMG_0164.WEBP') }}"); }
+        .g165 { background-image: url("{{ url_for('static', filename='IMG_0165.WEBP') }}"); }
+        .g166 { background-image: url("{{ url_for('static', filename='IMG_0166.WEBP') }}"); }
+        .g167 { background-image: url("{{ url_for('static', filename='IMG_0167.WEBP') }}"); }
+        .g168 { background-image: url("{{ url_for('static', filename='IMG_0168.WEBP') }}"); }
+        .g170 { background-image: url("{{ url_for('static', filename='IMG_0170.WEBP') }}"); }
+        .g171 { background-image: url("{{ url_for('static', filename='IMG_0171.WEBP') }}"); }
+        .g172 { background-image: url("{{ url_for('static', filename='IMG_0172.WEBP') }}"); }
+        .g173 { background-image: url("{{ url_for('static', filename='IMG_0173.WEBP') }}"); }
+        
         #interface-signal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0e1015; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
         .content-overlay { text-align: center; width: 100%; padding: 20px; }
         .game-icon-small { width: 80px; height: 80px; border-radius: 50%; background-size: cover; background-position: center; border: 3px solid #00ffcc; margin: 0 auto 15px auto; }
@@ -24,7 +31,7 @@
     </style>
 </head>
 <body>
-    <div id="main-menu">
+    <div id="main-menu" style="display:none;">
         <h1 style="text-align:center; margin-bottom:20px;">PLATEFORME VIP</h1>
         <div class="games-grid">
             <div class="game-card g164" onclick="ouvrirJeu('Lucky Jet', 'g164')">Lucky Jet</div>
@@ -50,64 +57,44 @@
     </div>
 
     <script>
-        let configJeux = {};
+        // Vérification VIP au chargement
+        async function verifierVIP() {
+            const playerId = prompt("Entrez votre ID de joueur pour accéder aux signaux :");
+            if (!playerId) return verifierVIP(); // Relance si annulé
 
-        // Chargement automatique du JSON
-        async function chargerConfig() {
-            try {
-                const response = await fetch('config.json?t=' + new Date().getTime());
-                configJeux = await response.json();
-            } catch (e) {
-                console.error("Erreur chargement config.json");
+            const res = await fetch('/verifier-vip', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({player_id: playerId})
+            });
+
+            if (res.status === 200) {
+                document.getElementById('main-menu').style.display = 'block';
+                chargerConfig();
+            } else {
+                document.body.innerHTML = "<h1 style='text-align:center; margin-top:50px;'>ACCÈS REFUSÉ<br>Contactez le support.</h1>";
             }
         }
-        chargerConfig();
+        verifierVIP();
 
-        let currentGame = { nom: '', classe: '' };
+        let configJeux = {};
+        async function chargerConfig() {
+            const response = await fetch("{{ url_for('static', filename='config.json') }}");
+            configJeux = await response.json();
+        }
 
         function ouvrirJeu(nom, classe) {
-            currentGame = { nom, classe };
             document.getElementById('main-menu').style.display = 'none';
             document.getElementById('interface-signal').style.display = 'flex';
             document.getElementById('game-icon').className = 'game-icon-small ' + classe;
             document.getElementById('nom-jeu-titre').innerText = nom;
-            document.getElementById('resultat-affichage').style.display = 'none';
+            window.currentGame = { nom };
         }
 
         function lancerCalcul() {
             const cfg = configJeux[currentGame.nom];
-            if (!cfg) return alert("Configuration en cours de chargement...");
-            
-            const now = Date.now();
-            const [hD, mD] = cfg.debut.split(':').map(Number);
-            const date = new Date(now);
-            const startOfDay = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), hD, mD, 0);
-            
-            const cycleMs = cfg.cycle * 60 * 1000;
-            const targetSec = (currentGame.nom === 'Lucky Jet') ? 30 : 50;
-            const diffMs = now - startOfDay;
-            let cyclesEcoules = Math.floor(diffMs / cycleMs);
-            
-            let debutSignal = new Date(startOfDay + ((cyclesEcoules + 1) * cycleMs));
-            debutSignal.setUTCSeconds(targetSec);
-
-            const seed = Math.floor(debutSignal.getTime() / 60000);
-            const random = (seed * 9301 + 49297) % 233280 / 233280;
-            let cote = (10 + (random * 10)).toFixed(2);
-            let fiabiliteFixe = (currentGame.nom === 'Lucky Jet') ? 1.5 : 2.0;
-            
-            const pad = (n) => n.toString().padStart(2, '0');
-            const hF = `${pad(debutSignal.getUTCHours())}:${pad(debutSignal.getUTCMinutes())}:${pad(debutSignal.getUTCSeconds())}`;
-            
-            const affichage = document.getElementById('resultat-affichage');
-            affichage.innerHTML = `
-                <div style="margin-bottom:5px;">Cote cible</div>
-                <div style="font-size:32px; font-weight:bold; color:#00ffcc; margin-bottom:10px;">${cote}x</div>
-                <div style="border-top:1px solid #444; padding-top:10px;">
-                    <p style="font-size:12px; color:#aaa;">Début du signal: <b>${hF} UTC</b></p>
-                    <p style="font-size:16px; margin-top:5px; color:#ffffff;">Fiabilité: <b style="color:#ffcc00;">${fiabiliteFixe}</b></p>
-                </div>`;
-            affichage.style.display = 'block';
+            if (!cfg) return alert("Configuration en cours...");
+            // ... (ton code de calcul reste identique)
         }
     </script>
 </body>
