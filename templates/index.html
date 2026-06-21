@@ -8,7 +8,7 @@
         body { background: #0e1015; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; }
         .games-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .card { border-radius: 14px; aspect-ratio: 1/1.4; background-size: cover; cursor: pointer; border: 1px solid #333; }
-        /* Images */
+        /* Tes images */
         .g-lucky { background-image: url("/static/IMG_0164.WEBP"); }
         .g-rocket { background-image: url("/static/IMG_0165.WEBP"); }
         .g-1win { background-image: url("/static/IMG_0166.WEBP"); }
@@ -43,7 +43,7 @@
     <div id="res" class="box" style="display:none;">
         <p>Cote cible</p>
         <div id="cote" style="font-size:32px; color:#00ffcc; font-weight:bold;">--</div>
-        <p>Début: <span id="heure">--</span></p>
+        <p>Début du signal: <span id="heure">--</span></p>
         <p>Fiabilité: <span id="fiab">--</span></p>
     </div>
     <button class="btn" style="background:#00ffcc; color:#0e1015" onclick="calc()">DEMANDER SIGNAL</button>
@@ -51,20 +51,35 @@
 </div>
 
 <script>
-    const cfg = {"Lucky Jet": {cyc: 4, fiab: 1.5}, "Aviator": {cyc: 4, fiab: 2.0}};
+    const config = {
+        "Lucky Jet": {"cycle": 4, "fiabilite": 1.5},
+        "Rocket Queen": {"cycle": 3, "fiabilite": 2.0},
+        "1win Crash": {"cycle": 3, "fiabilite": 2.0},
+        "Tropicana": {"cycle": 5, "fiabilite": 2.0},
+        "Fortune Crash": {"cycle": 7, "fiabilite": 2.0},
+        "Meta Crash": {"cycle": 6, "fiabilite": 2.0},
+        "Empire Crime": {"cycle": 6, "fiabilite": 2.0},
+        "Astronaut": {"cycle": 5, "fiabilite": 2.0},
+        "Aviator": {"cycle": 4, "fiabilite": 2.0}
+    };
+    
     let jeu = "";
     function ouvrir(n) { jeu = n; document.getElementById('titre').innerText = n; document.getElementById('interface').style.display = 'block'; }
 
     function calc() {
-        const interval = (jeu === 'Lucky Jet') ? 30 : 50;
-        const now = Math.floor(Date.now() / 1000);
-        const next = Math.ceil(now / interval) * interval;
-        const d = new Date(next * 1000);
+        const cfg = config[jeu];
+        const cycleEnSecondes = cfg.cycle * 60;
+        const sFixe = (jeu === 'Lucky Jet') ? 30 : 50;
         
+        const now = Math.floor(Date.now() / 1000);
+        const prochainTs = Math.ceil(now / cycleEnSecondes) * cycleEnSecondes;
+        const d = new Date(prochainTs * 1000);
+        d.setUTCSeconds(sFixe);
+
         document.getElementById('res').style.display = 'block';
-        document.getElementById('cote').innerText = (Math.abs(Math.sin(next / (cfg[jeu]?.cyc || 4)) * 15) + 1.2).toFixed(2) + "x";
-        document.getElementById('heure').innerText = d.getUTCHours().toString().padStart(2,'0') + ":" + d.getUTCMinutes().toString().padStart(2,'0') + ":" + d.getUTCSeconds().toString().padStart(2,'0') + " UTC";
-        document.getElementById('fiab').innerText = (cfg[jeu]?.fiab || 2.0).toFixed(1);
+        document.getElementById('cote').innerText = (Math.abs(Math.sin(prochainTs) * 15) + 1.2).toFixed(2) + "x";
+        document.getElementById('heure').innerText = d.getUTCHours().toString().padStart(2,'0') + ":" + d.getUTCMinutes().toString().padStart(2,'0') + ":" + sFixe + " UTC";
+        document.getElementById('fiab').innerText = cfg.fiabilite.toFixed(1);
     }
 </script>
 </body>
