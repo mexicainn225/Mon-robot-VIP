@@ -7,49 +7,55 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { background-color: #0e1015; color: #ffffff; font-family: -apple-system, sans-serif; margin: 0; padding: 20px; text-align: center; }
-        .result-container { background: #1c1f26; padding: 20px; border-radius: 15px; margin: 20px 0; border: 1px solid #333; }
-        .cote-label { color: #888; font-size: 14px; }
-        .cote-value { color: #00ffcc; font-size: 32px; font-weight: bold; margin: 10px 0; }
-        .info-row { font-size: 14px; color: #ccc; margin: 5px 0; }
-        .btn-action { background: #00ffcc; color: #0e1015; border: none; padding: 15px 40px; border-radius: 30px; font-weight: bold; width: 100%; margin-bottom: 10px; cursor: pointer; }
-        .btn-back { background: #e0e0e0; color: #333; border: none; padding: 15px 40px; border-radius: 30px; font-weight: bold; width: 100%; }
+        .games-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+        .game-card { background: #1c1f26; border-radius: 14px; padding: 20px 5px; cursor: pointer; border: 1px solid #333; font-size: 12px; font-weight: bold; }
         #interface-signal { display: none; }
+        .result-container { background: #1c1f26; padding: 20px; border-radius: 15px; margin: 20px 0; border: 1px solid #333; }
+        .cote-value { color: #00ffcc; font-size: 32px; font-weight: bold; margin: 10px 0; }
+        .btn-action { background: #00ffcc; color: #0e1015; border: none; padding: 15px 40px; border-radius: 30px; font-weight: bold; width: 100%; margin-bottom: 10px; }
+        .btn-back { background: #e0e0e0; color: #333; border: none; padding: 15px 40px; border-radius: 30px; font-weight: bold; width: 100%; }
     </style>
 </head>
 <body>
 
     <div id="main-menu">
         <h1>PLATEFORME VIP</h1>
-        <div class="games-grid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-             </div>
+        <div class="games-grid">
+            <div class="game-card" onclick="ouvrirJeu('Lucky Jet')">Lucky Jet</div>
+            <div class="game-card" onclick="ouvrirJeu('Rocket Queen')">Rocket Queen</div>
+            <div class="game-card" onclick="ouvrirJeu('1win Crash')">1win Crash</div>
+            <div class="game-card" onclick="ouvrirJeu('Tropicana')">Tropicana</div>
+            <div class="game-card" onclick="ouvrirJeu('Fortune Crash')">Fortune Crash</div>
+            <div class="game-card" onclick="ouvrirJeu('Meta Crash')">Meta Crash</div>
+            <div class="game-card" onclick="ouvrirJeu('Empire Crime')">Empire Crime</div>
+            <div class="game-card" onclick="ouvrirJeu('Astronaut')">Astronaut</div>
+            <div class="game-card" onclick="ouvrirJeu('Aviator')">Aviator</div>
+        </div>
     </div>
 
     <div id="interface-signal">
-        <div id="game-icon" style="width:80px; height:80px; border-radius:50%; margin: 0 auto 15px; border: 3px solid #00ffcc;"></div>
         <h2 id="nom-jeu"></h2>
-        
         <div class="result-container">
-            <div class="cote-label">Cote cible</div>
+            <div style="color: #888;">Cote cible</div>
             <div id="cote-cible" class="cote-value">-</div>
-            <div id="heure-signal" class="info-row"></div>
-            <div id="fiabilite" class="info-row"></div>
+            <div id="heure-signal" style="font-size: 14px; margin: 5px 0;"></div>
+            <div id="fiabilite" style="font-size: 14px; margin: 5px 0;"></div>
         </div>
-
         <button class="btn-action" onclick="lancerCalcul()">DEMANDER SIGNAL</button>
         <button class="btn-back" onclick="fermerJeu()">RETOUR</button>
     </div>
 
     <script>
         const config = {
-            "Lucky Jet": {"fiabilite": 1.5, "delai": 30, "cycle": 4},
-            "Rocket Queen": {"fiabilite": 2, "delai": 50, "cycle": 3},
-            "1win Crash": {"fiabilite": 2, "delai": 50, "cycle": 3},
-            "Tropicana": {"fiabilite": 2, "delai": 50, "cycle": 5},
-            "Fortune Crash": {"fiabilite": 2, "delai": 50, "cycle": 7},
-            "Meta Crash": {"fiabilite": 2, "delai": 50, "cycle": 6},
-            "Empire Crime": {"fiabilite": 2, "delai": 50, "cycle": 6},
-            "Astronaut": {"fiabilite": 2, "delai": 50, "cycle": 5},
-            "Aviator": {"fiabilite": 2, "delai": 50, "cycle": 4}
+            "Lucky Jet": {"fiabilite": 1.5, "delai": 30},
+            "Rocket Queen": {"fiabilite": 2, "delai": 50},
+            "1win Crash": {"fiabilite": 2, "delai": 50},
+            "Tropicana": {"fiabilite": 2, "delai": 50},
+            "Fortune Crash": {"fiabilite": 2, "delai": 50},
+            "Meta Crash": {"fiabilite": 2, "delai": 50},
+            "Empire Crime": {"fiabilite": 2, "delai": 50},
+            "Astronaut": {"fiabilite": 2, "delai": 50},
+            "Aviator": {"fiabilite": 2, "delai": 50}
         };
 
         let jeuActuel = "";
@@ -59,7 +65,6 @@
             document.getElementById('main-menu').style.display = 'none';
             document.getElementById('interface-signal').style.display = 'block';
             document.getElementById('nom-jeu').innerText = nom;
-            // Réinitialisation
             document.getElementById('cote-cible').innerText = "-";
             document.getElementById('heure-signal').innerText = "";
             document.getElementById('fiabilite').innerText = "";
@@ -74,15 +79,12 @@
             const conf = config[jeuActuel];
             const display = document.getElementById('cote-cible');
             display.innerText = "Calcul...";
-
+            
             setTimeout(() => {
-                // Cote aléatoire 10+
                 const cote = (Math.random() * (20 - 10) + 10).toFixed(2);
-                
-                // Heure actuelle formatée HH:MM:SS
                 const now = new Date();
-                const timeString = now.toTimeString().split(' ')[0];
-
+                const timeString = now.toLocaleTimeString('fr-FR', { hour12: false });
+                
                 display.innerText = cote + "x";
                 document.getElementById('heure-signal').innerText = "Début du signal: " + timeString + " UTC";
                 document.getElementById('fiabilite').innerText = "Fiabilité: " + conf.fiabilite;
