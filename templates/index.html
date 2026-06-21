@@ -7,14 +7,21 @@
     <style>
         body { background-color: #0e1015; color: #ffffff; font-family: sans-serif; padding: 20px; }
         .games-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .game-card { border-radius: 14px; aspect-ratio: 1 / 1.4; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 10px; cursor: pointer; background-size: cover; background-position: center; border: 1px solid #333; }
+        .game-card { border-radius: 14px; aspect-ratio: 1 / 1.4; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 10px; cursor: pointer; background-size: cover; background-position: center; border: 1px solid #333; font-size: 10px; font-weight: bold; }
         
-        /* Tes images - ASSURE-TOI QU'ELLES SONT DANS LE DOSSIER /static/ */
-        .lucky { background-image: url("/static/IMG_0164.WEBP"); }
-        .others { background-image: url("/static/IMG_0165.WEBP"); } 
+        /* Tes images - Vérifie bien le nom des fichiers dans /static/ */
+        .g-lucky { background-image: url("/static/IMG_0164.WEBP"); }
+        .g-rocket { background-image: url("/static/IMG_0165.WEBP"); }
+        .g-1win { background-image: url("/static/IMG_0166.WEBP"); }
+        .g-tropic { background-image: url("/static/IMG_0167.WEBP"); }
+        .g-fortune { background-image: url("/static/IMG_0168.WEBP"); }
+        .g-meta { background-image: url("/static/IMG_0170.WEBP"); }
+        .g-empire { background-image: url("/static/IMG_0171.WEBP"); }
+        .g-astro { background-image: url("/static/IMG_0172.WEBP"); }
+        .g-aviator { background-image: url("/static/IMG_0173.WEBP"); }
 
-        #interface-signal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:#0e1015; flex-direction:column; align-items:center; justify-content:center; }
-        .result-box { background:#1c1f26; padding:20px; border-radius:15px; margin:20px 0; text-align:center; border: 1px solid #333; }
+        #interface-signal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:#0e1015; flex-direction:column; align-items:center; justify-content:center; z-index:100; }
+        .result-box { background:#1c1f26; padding:20px; border-radius:15px; margin:20px 0; text-align:center; border: 1px solid #333; width: 80%; }
         .btn-action { padding: 15px 40px; border-radius: 30px; border: none; font-weight: bold; cursor: pointer; margin-top:10px; width: 80%; }
         .btn-signal { background: #00ffcc; color: #0e1015; }
     </style>
@@ -24,8 +31,15 @@
 <div id="main-menu">
     <h1>SIGNAL GAME</h1>
     <div class="games-grid">
-        <div class="game-card lucky" onclick="ouvrirJeu('Lucky Jet')">Lucky Jet</div>
-        <div class="game-card others" onclick="ouvrirJeu('Aviator')">Aviator</div>
+        <div class="game-card g-lucky" onclick="ouvrirJeu('Lucky Jet')">Lucky Jet</div>
+        <div class="game-card g-rocket" onclick="ouvrirJeu('Rocket Queen')">Rocket Queen</div>
+        <div class="game-card g-1win" onclick="ouvrirJeu('1win Crash')">1win Crash</div>
+        <div class="game-card g-tropic" onclick="ouvrirJeu('Tropicana')">Tropicana</div>
+        <div class="game-card g-fortune" onclick="ouvrirJeu('Fortune Crash')">Fortune Crash</div>
+        <div class="game-card g-meta" onclick="ouvrirJeu('Meta Crash')">Meta Crash</div>
+        <div class="game-card g-empire" onclick="ouvrirJeu('Empire Crime')">Empire Crime</div>
+        <div class="game-card g-astro" onclick="ouvrirJeu('Astronaut')">Astronaut</div>
+        <div class="game-card g-aviator" onclick="ouvrirJeu('Aviator')">Aviator</div>
     </div>
 </div>
 
@@ -52,6 +66,7 @@
     function fermerJeu() {
         document.getElementById('main-menu').style.display = 'block';
         document.getElementById('interface-signal').style.display = 'none';
+        document.getElementById('resultat-affichage').style.display = 'none';
     }
 
     function lancerCalcul() {
@@ -59,7 +74,7 @@
         const resBox = document.getElementById('resultat-affichage');
         resBox.style.display = 'block';
         
-        // Règles: 30s pour Lucky Jet, 50s pour les autres
+        // Configuration: Lucky Jet (30s, 1.5) / Autres (50s, 2.0)
         const intervalle = (nomJeu === 'Lucky Jet') ? 30 : 50;
         const fiabilite = (nomJeu === 'Lucky Jet') ? 1.5 : 2.0;
         
