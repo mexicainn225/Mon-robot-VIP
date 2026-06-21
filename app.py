@@ -13,6 +13,7 @@ from pymongo import MongoClient
 app = Flask(__name__, template_folder='templates')
 TOKEN = os.environ.get("TOKEN")
 MONGO_URI = os.environ.get("MONGO_URI")
+ADMIN_ID = "5724620019" # Ton ID administrateur
 
 client = MongoClient(MONGO_URI)
 db = client['plateforme_db']
@@ -41,39 +42,55 @@ Thread(target=run_web, daemon=True).start()
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("👋 Bienvenue ! Entrez le code d'activation (ex: COK225) pour commencer.")
+    msg = (
+        "🤖 **COMMENT BÉNÉFICIER DU BOT ?** ⤵️\n\n"
+        "Condition obligatoire :\n"
+        "➡️ 🟡 Être inscrit avec le code promo **COK225**\n"
+        "🔗 https://lkbb.cc/78634e\n\n"
+        "➡️ 🟡 RECHARGEZ VOTRE COMPTE ✔️\n\n"
+        "➡️ 🟡 Envoyez votre **ID joueur** ici pour être confirmé ✅\n\n"
+        "🔒 Signaux illimités avec le code promo COK225"
+    )
+    await update.message.reply_text(msg)
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     user_id = str(update.effective_user.id)
+    username = update.effective_user.username or "Inconnu"
 
-    # 1. Vérification du code d'activation
+    # Vérification si déjà VIP
+    user = users_col.find_one({"telegram_id": user_id})
+    if user and user.get('is_vip'):
+        await update.message.reply_text("✅ Vous êtes déjà membre VIP ! Accédez à la Web App.")
+        return
+
+    # Processus d'inscription
     if text == "COK225":
         context.user_data['waiting_for_id'] = True
-        await update.message.reply_text("✅ Code valide ! Maintenant, envoyez-moi votre ID de joueur pour terminer l'inscription.")
+        await update.message.reply_text("✅ Code valide ! Envoyez-moi maintenant votre ID de joueur pour validation.")
     
-    # 2. Enregistrement de l'ID après le code
-    elif context.user_data.get('waiting_for_id'):
-        player_id = text
-        users_col.update_one(
-            {"player_id": player_id}, 
-            {"$set": {"is_vip": True, "telegram_id": user_id}}, 
-            upsert=True
+    elif context.user_data.get('waiting_for_id') and text.isdigit():
+        # Transférer la demande à l'admin
+        await context.bot.send_message(
+            chat_id=ADMIN_ID,
+            text=f"🔔 **Nouvelle demande de validation**\n👤 Utilisateur : @{username} (ID: {user_id})\n🆔 ID Joueur : `{text}`"
         )
+        await update.message.reply_text("⏳ Demande envoyée à l'admin. Veuillez patienter pour la confirmation.")
         context.user_data['waiting_for_id'] = False
-        await update.message.reply_text("🎉 Inscription réussie ! Vous êtes maintenant VIP.")
-    
     else:
-        await update.message.reply_text("Envoyez 'COK225' pour commencer votre inscription.")
+        await update.message.reply_text("❌ Envoyez 'COK225' pour commencer ou votre ID joueur pour validation.")
 
-async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # La logique de signal reste inchangée
-    game_name = update.effective_message.web_app_data.data
-    await update.message.reply_text(f"✅ **Signal {game_name}**\n\n🎯 **Cote : {round(random.uniform(1.5, 12.5), 2)}x**")
+async def valider_joueur(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if str(update.effective_user.id) != ADMIN_ID: return
+    if context.args:
+        target_id = context.args[0]
+        users_col.update_one({"telegram_id": target_id}, {"$set": {"is_vip": True}}, upsert=True)
+        await update.message.reply_text(f"✅ Joueur {target_id} activé.")
+        await context.bot.send_message(chat_id=target_id, text="🎉 Votre accès VIP est confirmé !")
 
 if __name__ == '__main__':
     bot_app = ApplicationBuilder().token(TOKEN).build()
     bot_app.add_handler(CommandHandler("start", start))
+    bot_app.add_handler(CommandHandler("valider", valider_joueur))
     bot_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    bot_app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_data))
     bot_app.run_polling()
