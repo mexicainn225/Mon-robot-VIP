@@ -75,15 +75,15 @@
         tg.ready();
         
         const gameConfigs = {
-            "Lucky Jet": {"cycle": 4, "secondes": "30", "fiabilite": 1.5},
-            "Rocket Queen": {"cycle": 3, "secondes": "50", "fiabilite": 2},
-            "1win Crash": {"cycle": 3, "secondes": "50", "fiabilite": 2},
-            "Tropicana": {"cycle": 5, "secondes": "50", "fiabilite": 2},
-            "Fortune Crash": {"cycle": 7, "secondes": "50", "fiabilite": 2},
-            "Meta Crash": {"cycle": 6, "secondes": "50", "fiabilite": 2},
-            "Empire Crime": {"cycle": 6, "secondes": "50", "fiabilite": 2},
-            "Astronaut": {"cycle": 5, "secondes": "50", "fiabilite": 2},
-            "Aviator": {"cycle": 4, "secondes": "50", "fiabilite": 2}
+            "Lucky Jet": {"cycle": 4, "secondes": "30", "fiabilite": 1.5, "start": [0, 0]},
+            "Rocket Queen": {"cycle": 3, "secondes": "50", "fiabilite": 2, "start": [0, 0]},
+            "1win Crash": {"cycle": 3, "secondes": "50", "fiabilite": 2, "start": [0, 0]},
+            "Tropicana": {"cycle": 5, "secondes": "50", "fiabilite": 2, "start": [0, 0]},
+            "Fortune Crash": {"cycle": 7, "secondes": "50", "fiabilite": 2, "start": [0, 0]},
+            "Meta Crash": {"cycle": 6, "secondes": "50", "fiabilite": 2, "start": [0, 0]},
+            "Empire Crime": {"cycle": 6, "secondes": "50", "fiabilite": 2, "start": [0, 0]},
+            "Astronaut": {"cycle": 5, "secondes": "50", "fiabilite": 2, "start": [0, 0]},
+            "Aviator": {"cycle": 4, "secondes": "50", "fiabilite": 2, "start": [0, 0]}
         };
 
         let jeuActuel = "";
@@ -111,8 +111,11 @@
 
             setTimeout(() => {
                 const now = new Date();
-                const minutes = now.getHours() * 60 + now.getMinutes();
-                const creneau = Math.ceil((minutes + 1) / conf.cycle) * conf.cycle;
+                const startTimeMinutes = conf.start[0] * 60 + conf.start[1];
+                const nowMinutes = now.getHours() * 60 + now.getMinutes();
+                const elapsed = Math.max(0, nowMinutes - startTimeMinutes);
+                
+                const creneau = startTimeMinutes + Math.ceil((elapsed + 1) / conf.cycle) * conf.cycle;
                 
                 const h = Math.floor(creneau / 60) % 24;
                 const m = creneau % 60;
@@ -123,7 +126,6 @@
                     h.toString().padStart(2, '0') + ":" + m.toString().padStart(2, '0') + ":" + conf.secondes;
                 
                 fiabEl.innerText = "Fiabilité: " + conf.fiabilite;
-                // Logique de couleur : 2 est vert, 1.5 est rouge
                 fiabEl.className = 'fiabilite-text ' + (conf.fiabilite >= 2 ? 'fiabilite-haute' : 'fiabilite-basse');
             }, 1000);
         }
