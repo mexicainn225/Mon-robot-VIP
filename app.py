@@ -15,11 +15,11 @@ async def start(update, context):
     message = (
         "Bienvenue sur le bot 1win 🚀\n\n"
         "Pour débloquer tes accès, suis ces étapes :\n\n"
-        "1. Inscris-toi ici : https://lkbb.cc/78634e\n"
-        "2. Utilise le code promo : COK225\n"
-        "3. Effectue une recharge sur ton compte.\n"
-        "4. Envoie ton ID 1win ici pour validation.\n\n"
-        "Dès que c'est fait, tu pourras accéder aux signaux !"
+        "1️⃣ Inscris-toi ici : https://lkbb.cc/78634e\n"
+        "2️⃣ Utilise le code promo : COK225\n"
+        "3️⃣ Effectue une recharge sur ton compte.\n"
+        "4️⃣ Envoie ton ID 1win ici pour validation.\n\n"
+        "Dès que c'est fait, tu pourras accéder aux signaux ! ✅"
     )
     await update.message.reply_text(message)
 
@@ -28,10 +28,8 @@ def run_web():
     app.run(host='0.0.0.0', port=port)
 
 if __name__ == '__main__':
-    # Lance Flask dans un thread séparé
     Thread(target=run_web).start()
     
-    # Lance le bot
     bot_app = ApplicationBuilder().token(TOKEN).build()
     bot_app.add_handler(CommandHandler("start", start))
     bot_app.run_polling()
