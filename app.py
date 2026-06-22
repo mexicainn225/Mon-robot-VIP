@@ -8,12 +8,15 @@ TOKEN = os.environ.get("TOKEN")
 ADMIN_ID = "5724620019"
 
 def est_autorise(user_id):
-    # Accès prioritaire pour l'administrateur
-    if str(user_id) == ADMIN_ID: return True
+    # Accès prioritaire et automatique pour toi (Admin)
+    if str(user_id) == str(ADMIN_ID): 
+        return True
     # Vérification dans le fichier pour les autres
-    if not os.path.exists('utilisateurs.txt'): return False
+    if not os.path.exists('utilisateurs.txt'): 
+        return False
     with open('utilisateurs.txt', 'r') as f:
-        return str(user_id) in f.read().splitlines()
+        liste_ids = [line.strip() for line in f.readlines()]
+        return str(user_id).strip() in liste_ids
 
 @app.route('/')
 def home():
@@ -36,17 +39,19 @@ async def start(update, context):
 
 async def valider(update, context):
     if str(update.effective_user.id) == ADMIN_ID and context.args:
+        new_id = context.args[0].strip()
         with open('utilisateurs.txt', 'a') as f:
-            f.write(context.args[0] + '\n')
-        await update.message.reply_text(f"ID {context.args[0]} validé ✅")
+            f.write(new_id + '\n')
+        await update.message.reply_text(f"ID {new_id} validé avec succès ✅")
 
 async def recevoir_id(update, context):
     joueur_id = update.effective_user.id
     await context.bot.send_message(ADMIN_ID, f"🚨 Nouvel ID reçu: {update.message.text}\nID Telegram: {joueur_id}\n\nPour valider, réponds avec: /valider {update.message.text}")
-    await update.message.reply_text("Ton ID a été transmis à l'administrateur.")
+    await update.message.reply_text("Ton ID a été transmis à l'administrateur. Tu seras notifié dès validation.")
 
 def run_web():
-    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 10000)))
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
 
 if __name__ == '__main__':
     Thread(target=run_web).start()
