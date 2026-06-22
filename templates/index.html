@@ -74,16 +74,6 @@
         const tg = window.Telegram.WebApp;
         tg.ready();
         
-        // --- VÉRIFICATION ACCÈS ---
-        const userId = tg.initDataUnsafe.user.id;
-        fetch(`/?user_id=${userId}`)
-            .then(response => {
-                if (response.status === 403) {
-                    document.body.innerHTML = "<h1 style='text-align:center; margin-top:50px;'>Accès refusé. Contactez l'admin.</h1>";
-                }
-            });
-        // --- FIN VÉRIFICATION ---
-
         const gameConfigs = {
             "Lucky Jet": {"cycle": 4, "secondes": "30", "fiabilite": 1.5, "start": [0, 0]},
             "Rocket Queen": {"cycle": 3, "secondes": "50", "fiabilite": 2, "start": [0, 0]},
