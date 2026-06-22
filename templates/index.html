@@ -31,6 +31,7 @@
     </style>
 </head>
 <body>
+
     <div id="main-menu">
         <h1>PLATEFORME VIP</h1>
         <div class="games-grid">
@@ -45,6 +46,7 @@
             <div class="game-card g173" onclick="ouvrirJeu('Aviator', 'g173')">Aviator</div>
         </div>
     </div>
+
     <div id="interface-signal">
         <h2 id="nom-jeu"></h2>
         <div class="result-container" id="res-box">
@@ -56,10 +58,12 @@
         <button class="btn-action" onclick="lancerCalcul()">DEMANDER SIGNAL</button>
         <button class="btn-back" onclick="fermerJeu()">RETOUR</button>
     </div>
+
     <script>
         const tg = window.Telegram.WebApp;
         tg.ready();
         
+        // --- VÉRIFICATION ---
         const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : null;
         fetch(`/?user_id=${userId}`)
             .then(response => {
@@ -67,6 +71,7 @@
                     document.body.innerHTML = "<h1 style='text-align:center; padding-top:100px; color:white;'>Accès refusé ❌</h1>";
                 }
             });
+        // --------------------
 
         const gameConfigs = {
             "Lucky Jet": {"cycle": 4, "secondes": "30", "fiabilite": 1.5, "start": [0, 0]},
@@ -79,6 +84,7 @@
             "Astronaut": {"cycle": 5, "secondes": "50", "fiabilite": 2, "start": [0, 0]},
             "Aviator": {"cycle": 4, "secondes": "50", "fiabilite": 2, "start": [0, 0]}
         };
+
         let jeuActuel = "";
         function ouvrirJeu(nom, classe) {
             jeuActuel = nom;
