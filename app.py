@@ -1,6 +1,7 @@
 import os
 import logging
 from flask import Flask, render_template
+from threading import Thread
 from telegram.ext import ApplicationBuilder, CommandHandler
 
 app = Flask(__name__)
@@ -8,7 +9,7 @@ TOKEN = os.environ.get("TOKEN")
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return "Bot en ligne"
 
 async def start(update, context):
     message = (
@@ -22,10 +23,15 @@ async def start(update, context):
     )
     await update.message.reply_text(message)
 
-def main():
+def run_web():
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
+
+if __name__ == '__main__':
+    # Lance Flask dans un thread séparé
+    Thread(target=run_web).start()
+    
+    # Lance le bot
     bot_app = ApplicationBuilder().token(TOKEN).build()
     bot_app.add_handler(CommandHandler("start", start))
     bot_app.run_polling()
-
-if __name__ == '__main__':
-    main()
