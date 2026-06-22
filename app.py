@@ -2,8 +2,10 @@ import os
 import hmac
 import hashlib
 import json
+import asyncio
 from flask import Flask, render_template, request, jsonify
 from threading import Thread
+from telegram import Bot
 from telegram.ext import ApplicationBuilder, CommandHandler
 from pymongo import MongoClient
 
@@ -18,6 +20,14 @@ client = MongoClient(MONGO_URI)
 db = client['bot_database']
 users_col = db['utilisateurs']
 
+# Fonction pour t'envoyer les ID des curieux
+async def notifier_admin(user_id, username):
+    bot = Bot(token=TOKEN)
+    try:
+        await bot.send_message(chat_id=ADMIN_ID, text=f"🔔 Nouvelle tentative d'accès !\nID : {user_id}\nNom : {username}")
+    except Exception as e:
+        print(f"Erreur notif admin : {e}")
+
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -28,7 +38,7 @@ def check_access():
     if not init_data:
         return jsonify({"allowed": False}), 403
 
-    # Vérification de la signature Telegram (Sécurité)
+    # Vérification signature Telegram
     data_dict = dict(x.split('=') for x in init_data.split('&'))
     check_hash = data_dict.pop('hash')
     data_check_string = "\n".join([f"{k}={v}" for k, v in sorted(data_dict.items())])
@@ -39,14 +49,16 @@ def check_access():
     if hmac_string != check_hash:
         return jsonify({"allowed": False}), 403
 
-    # Vérification dans la base MongoDB
     user_info = json.loads(data_dict['user'])
     user_id = user_info['id']
-    
-    # Accès automatique pour toi (Admin) ou si présent dans MongoDB
+    username = user_info.get('username', 'Inconnu')
+
+    # Vérification accès (Admin ou MongoDB)
     if user_id == ADMIN_ID or users_col.find_one({"user_id": user_id}):
         return jsonify({"allowed": True})
     
+    # Si non autorisé, on t'envoie une notification
+    asyncio.run(notifier_admin(user_id, username))
     return jsonify({"allowed": False})
 
 async def start(update, context):
@@ -77,10 +89,7 @@ def run_web():
     app.run(host='0.0.0.0', port=port)
 
 if __name__ == '__main__':
-    # Démarrage du serveur web
     Thread(target=run_web).start()
-    
-    # Démarrage du bot
     bot_app = ApplicationBuilder().token(TOKEN).build()
     bot_app.add_handler(CommandHandler("start", start))
     bot_app.add_handler(CommandHandler("valider", valider))
