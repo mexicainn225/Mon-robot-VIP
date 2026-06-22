@@ -9,6 +9,9 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: #0e1015; color: #ffffff; padding: 16px; min-height: 100vh; text-align: center; }
         
+        /* Cacher le corps par défaut pour la sécurité */
+        #app-content { display: none; }
+        
         .games-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
         .game-card { border-radius: 14px; aspect-ratio: 1 / 1.4; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 10px; cursor: pointer; background-size: cover; background-position: center; background-color: #151822; font-size: 10px; font-weight: bold; text-transform: uppercase; border: 1px solid #333; }
         
@@ -43,37 +46,68 @@
 </head>
 <body>
 
-    <div id="main-menu">
-        <h1>PLATEFORME VIP</h1>
-        <div class="games-grid">
-            <div class="game-card g164" onclick="ouvrirJeu('Lucky Jet', 'g164')">Lucky Jet</div>
-            <div class="game-card g165" onclick="ouvrirJeu('Rocket Queen', 'g165')">Rocket Queen</div>
-            <div class="game-card g166" onclick="ouvrirJeu('1win Crash', 'g166')">1win Crash</div>
-            <div class="game-card g167" onclick="ouvrirJeu('Tropicana', 'g167')">Tropicana</div>
-            <div class="game-card g168" onclick="ouvrirJeu('Fortune Crash', 'g168')">Fortune Crash</div>
-            <div class="game-card g170" onclick="ouvrirJeu('Meta Crash', 'g170')">Meta Crash</div>
-            <div class="game-card g171" onclick="ouvrirJeu('Empire Crime', 'g171')">Empire Crime</div>
-            <div class="game-card g172" onclick="ouvrirJeu('Astronaut', 'g172')">Astronaut</div>
-            <div class="game-card g173" onclick="ouvrirJeu('Aviator', 'g173')">Aviator</div>
+    <div id="app-content">
+        <div id="main-menu">
+            <h1>PLATEFORME VIP</h1>
+            <div class="games-grid">
+                <div class="game-card g164" onclick="ouvrirJeu('Lucky Jet', 'g164')">Lucky Jet</div>
+                <div class="game-card g165" onclick="ouvrirJeu('Rocket Queen', 'g165')">Rocket Queen</div>
+                <div class="game-card g166" onclick="ouvrirJeu('1win Crash', 'g166')">1win Crash</div>
+                <div class="game-card g167" onclick="ouvrirJeu('Tropicana', 'g167')">Tropicana</div>
+                <div class="game-card g168" onclick="ouvrirJeu('Fortune Crash', 'g168')">Fortune Crash</div>
+                <div class="game-card g170" onclick="ouvrirJeu('Meta Crash', 'g170')">Meta Crash</div>
+                <div class="game-card g171" onclick="ouvrirJeu('Empire Crime', 'g171')">Empire Crime</div>
+                <div class="game-card g172" onclick="ouvrirJeu('Astronaut', 'g172')">Astronaut</div>
+                <div class="game-card g173" onclick="ouvrirJeu('Aviator', 'g173')">Aviator</div>
+            </div>
         </div>
-    </div>
 
-    <div id="interface-signal">
-        <h2 id="nom-jeu"></h2>
-        <div class="result-container" id="res-box">
-            <div class="cote-label">Cote cible</div>
-            <div id="cote-cible" class="cote-value">-</div>
-            <div id="heure-affichage" style="font-size: 14px; color: #ccc;"></div>
-            <div id="fiabilite-affichage" class="fiabilite-text"></div>
+        <div id="interface-signal">
+            <h2 id="nom-jeu"></h2>
+            <div class="result-container" id="res-box">
+                <div class="cote-label">Cote cible</div>
+                <div id="cote-cible" class="cote-value">-</div>
+                <div id="heure-affichage" style="font-size: 14px; color: #ccc;"></div>
+                <div id="fiabilite-affichage" class="fiabilite-text"></div>
+            </div>
+            <button class="btn-action" onclick="lancerCalcul()">DEMANDER SIGNAL</button>
+            <button class="btn-back" onclick="fermerJeu()">RETOUR</button>
         </div>
-        <button class="btn-action" onclick="lancerCalcul()">DEMANDER SIGNAL</button>
-        <button class="btn-back" onclick="fermerJeu()">RETOUR</button>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.ready();
-        
+
+        // Vérification de sécurité au chargement
+        async function verifierAcces() {
+            try {
+                const response = await fetch('/check_access', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({initData: tg.initData})
+                });
+                
+                const result = await response.json();
+                
+                if (result.allowed) {
+                    document.getElementById('app-content').style.display = "block";
+                } else {
+                    document.body.innerHTML = `
+                        <div style="text-align:center; margin-top:100px; color:white; padding:20px;">
+                            <h2>🔒 Accès Restreint</h2>
+                            <p>Tu n'as pas encore accès aux signaux.</p>
+                            <p style="margin:20px 0;">Ton ID : <b>${tg.initDataUnsafe.user?.id || 'Inconnu'}</b></p>
+                            <p>Envoie cet ID sur le bot pour être validé.</p>
+                        </div>`;
+                }
+            } catch (e) {
+                document.body.innerHTML = "<h2 style='color:white; text-align:center; margin-top:50px;'>Erreur de connexion</h2>";
+            }
+        }
+        verifierAcces();
+
+        // --- Logique du Jeu ---
         const gameConfigs = {
             "Lucky Jet": {"cycle": 4, "secondes": "30", "fiabilite": 1.5, "start": [0, 0]},
             "Rocket Queen": {"cycle": 3, "secondes": "50", "fiabilite": 2, "start": [0, 0]},
