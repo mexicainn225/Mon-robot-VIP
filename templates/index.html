@@ -8,10 +8,8 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: #0e1015; color: #ffffff; padding: 16px; min-height: 100vh; text-align: center; }
-        
         .games-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
         .game-card { border-radius: 14px; aspect-ratio: 1 / 1.4; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 10px; cursor: pointer; background-size: cover; background-position: center; background-color: #151822; font-size: 10px; font-weight: bold; text-transform: uppercase; border: 1px solid #333; }
-        
         .g164 { background-image: url("{{ url_for('static', filename='IMG_0164.WEBP') }}"); }
         .g165 { background-image: url("{{ url_for('static', filename='IMG_0165.WEBP') }}"); }
         .g166 { background-image: url("{{ url_for('static', filename='IMG_0166.WEBP') }}"); }
@@ -21,28 +19,18 @@
         .g171 { background-image: url("{{ url_for('static', filename='IMG_0171.WEBP') }}"); }
         .g172 { background-image: url("{{ url_for('static', filename='IMG_0172.WEBP') }}"); }
         .g173 { background-image: url("{{ url_for('static', filename='IMG_0173.WEBP') }}"); }
-        
         #interface-signal { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; margin-top: 20px; }
-        
-        .result-container { 
-            padding: 20px; border-radius: 15px; margin: 20px 0; border: 1px solid #333; width: 90%; 
-            background-size: cover; background-position: center; 
-            background-color: rgba(28, 31, 38, 0.9); background-blend-mode: overlay;
-        }
-        
+        .result-container { padding: 20px; border-radius: 15px; margin: 20px 0; border: 1px solid #333; width: 90%; background-size: cover; background-position: center; background-color: rgba(28, 31, 38, 0.9); background-blend-mode: overlay; }
         .cote-label { color: #888; font-size: 14px; }
         .cote-value { color: #00ffcc; font-size: 32px; font-weight: bold; margin: 10px 0; }
-        
         .fiabilite-text { font-size: 14px; font-weight: bold; }
         .fiabilite-haute { color: #00ffcc; }
         .fiabilite-basse { color: #ff3366; }
-        
         .btn-action { background: #00ffcc; color: #0e1015; border: none; padding: 15px; border-radius: 30px; font-weight: bold; width: 90%; margin-bottom: 10px; cursor: pointer; }
         .btn-back { background: #e0e0e0; color: #333; border: none; padding: 15px; border-radius: 30px; font-weight: bold; width: 90%; cursor: pointer; }
     </style>
 </head>
 <body>
-
     <div id="main-menu">
         <h1>PLATEFORME VIP</h1>
         <div class="games-grid">
@@ -57,7 +45,6 @@
             <div class="game-card g173" onclick="ouvrirJeu('Aviator', 'g173')">Aviator</div>
         </div>
     </div>
-
     <div id="interface-signal">
         <h2 id="nom-jeu"></h2>
         <div class="result-container" id="res-box">
@@ -69,11 +56,19 @@
         <button class="btn-action" onclick="lancerCalcul()">DEMANDER SIGNAL</button>
         <button class="btn-back" onclick="fermerJeu()">RETOUR</button>
     </div>
-
     <script>
         const tg = window.Telegram.WebApp;
         tg.ready();
         
+        // VÉRIFICATION SÉCURITÉ
+        const userId = tg.initDataUnsafe.user.id;
+        fetch(`/?user_id=${userId}`)
+            .then(response => {
+                if (response.status === 403) {
+                    document.body.innerHTML = "<h1 style='text-align:center; padding-top:100px;'>Accès refusé ❌<br>ID non validé.</h1>";
+                }
+            });
+
         const gameConfigs = {
             "Lucky Jet": {"cycle": 4, "secondes": "30", "fiabilite": 1.5, "start": [0, 0]},
             "Rocket Queen": {"cycle": 3, "secondes": "50", "fiabilite": 2, "start": [0, 0]},
@@ -87,7 +82,6 @@
         };
 
         let jeuActuel = "";
-
         function ouvrirJeu(nom, classe) {
             jeuActuel = nom;
             document.getElementById('main-menu').style.display = 'none';
@@ -95,36 +89,27 @@
             document.getElementById('nom-jeu').innerText = nom;
             document.getElementById('res-box').className = 'result-container ' + classe;
         }
-
         function fermerJeu() {
             document.getElementById('main-menu').style.display = 'block';
             document.getElementById('interface-signal').style.display = 'none';
         }
-
         function lancerCalcul() {
             const res = document.getElementById('cote-cible');
             const fiabEl = document.getElementById('fiabilite-affichage');
             const conf = gameConfigs[jeuActuel];
-            
             tg.HapticFeedback.impactOccurred('medium');
             res.innerText = "Calcul...";
-
             setTimeout(() => {
                 const now = new Date();
                 const startTimeMinutes = conf.start[0] * 60 + conf.start[1];
                 const nowMinutes = now.getHours() * 60 + now.getMinutes();
                 const elapsed = Math.max(0, nowMinutes - startTimeMinutes);
-                
                 const creneau = startTimeMinutes + Math.ceil((elapsed + 1) / conf.cycle) * conf.cycle;
-                
                 const h = Math.floor(creneau / 60) % 24;
                 const m = creneau % 60;
                 const cote = (10 + (Math.abs(Math.sin(creneau)) * 10)).toFixed(2);
-                
                 res.innerText = cote + "x";
-                document.getElementById('heure-affichage').innerText = "Début: " + 
-                    h.toString().padStart(2, '0') + ":" + m.toString().padStart(2, '0') + ":" + conf.secondes;
-                
+                document.getElementById('heure-affichage').innerText = "Début: " + h.toString().padStart(2, '0') + ":" + m.toString().padStart(2, '0') + ":" + conf.secondes;
                 fiabEl.innerText = "Fiabilité: " + conf.fiabilite;
                 fiabEl.className = 'fiabilite-text ' + (conf.fiabilite >= 2 ? 'fiabilite-haute' : 'fiabilite-basse');
             }, 1000);
