@@ -94,18 +94,19 @@
         tg.ready();
         
         const gameConfigs = {
-            "Lucky Jet": {"type": "crash", "cycle": 3, "start": [0, 0], "fiabilite": 1.5},
-            "Rocket Queen": {"type": "crash", "cycle": 4, "start": [0, 0], "fiabilite": 2},
-            "1win Crash": {"type": "crash", "cycle": 5, "start": [0, 0], "fiabilite": 2},
-            "Tropicana": {"type": "crash", "cycle": 5, "start": [0, 0], "fiabilite": 1.5},
-            "Fortune Crash": {"type": "crash", "cycle": 5, "start": [0, 0], "fiabilite": 2},
-            "Meta Crash": {"type": "crash", "cycle": 7, "start": [0, 0], "fiabilite": 2},
-            "Empire Crime": {"type": "crash", "cycle": 8, "start": [0, 0], "fiabilite": 2},
-            "Astronaut": {"type": "crash", "cycle": 6, "start": [0, 0], "fiabilite": 2},
-            "Aviator": {"type": "crash", "cycle": 3, "start": [0, 0], "fiabilite": 1.5},
-            "Mines Classic": {"type": "mines", "cycle": 5, "start": [0, 0], "nbEtoiles": 5, "fiabilite": 1.9},
-            "Mines": {"type": "mines", "cycle": 4, "start": [0, 0], "nbEtoiles": 7, "fiabilite": 2.0},
-            "Mines BB": {"type": "mines", "cycle": 6, "start": [0, 0], "nbEtoiles": 6, "fiabilite": 1.8}
+            "Lucky Jet": {"type": "crash", "cycle": 3, "start": [0, 0], "fiabilite": "1.5x"},
+            "Rocket Queen": {"type": "crash", "cycle": 4, "start": [0, 0], "fiabilite": "2.0x"},
+            "1win Crash": {"type": "crash", "cycle": 5, "start": [0, 0], "fiabilite": "2.0x"},
+            "Tropicana": {"type": "crash", "cycle": 5, "start": [0, 0], "fiabilite": "1.5x"},
+            "Fortune Crash": {"type": "crash", "cycle": 5, "start": [0, 0], "fiabilite": "2.0x"},
+            "Meta Crash": {"type": "crash", "cycle": 7, "start": [0, 0], "fiabilite": "2.0x"},
+            "Empire Crime": {"type": "crash", "cycle": 8, "start": [0, 0], "fiabilite": "2.0x"},
+            "Astronaut": {"type": "crash", "cycle": 6, "start": [0, 0], "fiabilite": "2.0x"},
+            "Aviator": {"type": "crash", "cycle": 3, "start": [0, 0], "fiabilite": "1.5x"},
+            // Nouveaux jeux de mines avec fiabilité en pourcentage (80% à 95%)
+            "Mines Classic": {"type": "mines", "cycle": 5, "start": [0, 0], "nbEtoiles": 5, "fiabilite": "89%"},
+            "Mines": {"type": "mines", "cycle": 4, "start": [0, 0], "nbEtoiles": 7, "fiabilite": "94%"},
+            "Mines BB": {"type": "mines", "cycle": 6, "start": [0, 0], "nbEtoiles": 6, "fiabilite": "91%"}
         };
 
         let jeuActuel = "";
@@ -123,6 +124,11 @@
         function fermerJeu() {
             document.getElementById('main-menu').style.display = 'block';
             document.getElementById('interface-signal').style.display = 'none';
+        }
+
+        function pseudoRandom(seed) {
+            let x = Math.sin(seed++) * 10000;
+            return x - Math.floor(x);
         }
 
         function lancerCalcul() {
@@ -149,11 +155,14 @@
                     cell.className = 'mine-cell';
                     container.appendChild(cell);
                 }
+
+                let seed = nextLaunch * 99; 
                 let gagnees = [];
                 while(gagnees.length < conf.nbEtoiles) {
-                    let r = Math.floor(Math.random() * 25);
+                    let r = Math.floor(pseudoRandom(seed++) * 25);
                     if(!gagnees.includes(r)) gagnees.push(r);
                 }
+
                 gagnees.forEach(index => {
                     container.children[index].className = 'mine-cell active';
                     container.children[index].innerText = '⭐';
@@ -164,7 +173,7 @@
                 document.getElementById('valeur-principale').innerText = cote + "x";
             }
             
-            document.getElementById('fiabilite-affichage').innerText = "Fiabilité : " + conf.fiabilite + "x";
+            document.getElementById('fiabilite-affichage').innerText = "Fiabilité : " + conf.fiabilite;
         }
     </script>
 </body>
