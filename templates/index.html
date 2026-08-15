@@ -91,15 +91,16 @@
         tg.ready();
         
         const gameConfigs = {
-            "Lucky Jet": {"type": "crash", "cycle": 3, "start": [0, 0], "fiabilite": "1.5x"},
-            "Rocket Queen": {"type": "crash", "cycle": 4, "start": [0, 0], "fiabilite": "2.0x"},
-            "1win Crash": {"type": "crash", "cycle": 5, "start": [0, 0], "fiabilite": "2.0x"},
-            "Tropicana": {"type": "crash", "cycle": 5, "start": [0, 0], "fiabilite": "1.5x"},
-            "Fortune Crash": {"type": "crash", "cycle": 5, "start": [0, 0], "fiabilite": "2.0x"},
-            "Meta Crash": {"type": "crash", "cycle": 7, "start": [0, 0], "fiabilite": "2.0x"},
-            "Empire Crime": {"type": "crash", "cycle": 8, "start": [0, 0], "fiabilite": "2.0x"},
-            "Astronaut": {"type": "crash", "cycle": 6, "start": [0, 0], "fiabilite": "2.0x"},
-            "Aviator": {"type": "crash", "cycle": 3, "start": [0, 0], "fiabilite": "1.5x"},
+            "Lucky Jet": {"type": "crash", "cycle": 3, "sec": 15, "start": [0, 0], "fiabilite": "1.5x"},
+            "Rocket Queen": {"type": "crash", "cycle": 4, "sec": 45, "start": [0, 0], "fiabilite": "2.0x"},
+            "1win Crash": {"type": "crash", "cycle": 5, "sec": 10, "start": [0, 0], "fiabilite": "2.0x"},
+            "Tropicana": {"type": "crash", "cycle": 5, "sec": 20, "start": [0, 0], "fiabilite": "1.5x"},
+            "Fortune Crash": {"type": "crash", "cycle": 5, "sec": 25, "start": [0, 0], "fiabilite": "2.0x"},
+            "Meta Crash": {"type": "crash", "cycle": 7, "sec": 0, "start": [0, 0], "fiabilite": "2.0x"},
+            "Empire Crime": {"type": "crash", "cycle": 8, "sec": 50, "start": [0, 0], "fiabilite": "2.0x"},
+            "Astronaut": {"type": "crash", "cycle": 6, "sec": 5, "start": [0, 0], "fiabilite": "2.0x"},
+            "Aviator": {"type": "crash", "cycle": 3, "sec": 30, "start": [0, 0], "fiabilite": "1.5x"}, // Aviator configuré à 30 secondes fixes
+            
             "Mines BB": {"type": "mines", "cycle": 3, "start": [0, 0], "nbEtoiles": 6, "fiabilite": "91%"},
             "Mines": {"type": "mines", "cycle": 5, "start": [0, 0], "nbEtoiles": 7, "fiabilite": "94%"},
             "Mines Classic": {"type": "mines", "cycle": 4, "start": [0, 0], "nbEtoiles": 5, "fiabilite": "89%"}
@@ -167,14 +168,15 @@
                 });
                 document.getElementById('valeur-principale').innerText = "PRÊT";
             } else {
-                // Anciens jeux (Crash) avec affichage des secondes
-                const totalSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+                // Anciens jeux (Crash) avec les secondes fixes configurées (ex: conf.sec)
+                const totalSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + conf.sec;
                 const cycleSec = conf.cycle * 60;
                 const nextLaunchSec = Math.ceil((totalSeconds + 1) / cycleSec) * cycleSec;
                 
                 const h = Math.floor(nextLaunchSec / 3600) % 24;
                 const m = Math.floor((nextLaunchSec % 3600) / 60);
-                const s = nextLaunchSec % 60;
+                const s = conf.sec;
+                
                 const timeStr = h.toString().padStart(2, '0') + ":" + m.toString().padStart(2, '0') + ":" + s.toString().padStart(2, '0');
                 
                 document.getElementById('info-lancer').innerText = "Lancer à : " + timeStr;
