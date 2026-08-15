@@ -132,19 +132,20 @@
             tg.HapticFeedback.impactOccurred('medium');
 
             const now = new Date();
-            const startMins = conf.start[0] * 60 + conf.start[1];
-            const nowMins = now.getHours() * 60 + now.getMinutes();
-            const elapsed = Math.max(0, nowMins - startMins);
-            const nextLaunch = startMins + Math.ceil((elapsed + 1) / conf.cycle) * conf.cycle;
-            
-            const h = Math.floor(nextLaunch / 60) % 24;
-            const m = nextLaunch % 60;
-            const timeStr = h.toString().padStart(2, '0') + ":" + m.toString().padStart(2, '0');
-            
-            document.getElementById('info-lancer').innerText = "Lancer à : " + timeStr;
 
             if (conf.type === 'mines') {
+                const startMins = conf.start[0] * 60 + conf.start[1];
+                const nowMins = now.getHours() * 60 + now.getMinutes();
+                const elapsed = Math.max(0, nowMins - startMins);
+                const nextLaunch = startMins + Math.ceil((elapsed + 1) / conf.cycle) * conf.cycle;
+                
+                const h = Math.floor(nextLaunch / 60) % 24;
+                const m = nextLaunch % 60;
+                const timeStr = h.toString().padStart(2, '0') + ":" + m.toString().padStart(2, '0');
+                
+                document.getElementById('info-lancer').innerText = "Lancer à : " + timeStr;
                 document.getElementById('instruction-texte').innerText = "Piège sur 3, essayer 3 fois dans la minute en cas de perte.";
+                
                 const container = document.getElementById('minesGridContainer');
                 container.innerHTML = '';
                 for (let i = 0; i < 25; i++) {
@@ -166,8 +167,20 @@
                 });
                 document.getElementById('valeur-principale').innerText = "PRÊT";
             } else {
+                // Anciens jeux (Crash) avec affichage des secondes
+                const totalSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+                const cycleSec = conf.cycle * 60;
+                const nextLaunchSec = Math.ceil((totalSeconds + 1) / cycleSec) * cycleSec;
+                
+                const h = Math.floor(nextLaunchSec / 3600) % 24;
+                const m = Math.floor((nextLaunchSec % 3600) / 60);
+                const s = nextLaunchSec % 60;
+                const timeStr = h.toString().padStart(2, '0') + ":" + m.toString().padStart(2, '0') + ":" + s.toString().padStart(2, '0');
+                
+                document.getElementById('info-lancer').innerText = "Lancer à : " + timeStr;
                 document.getElementById('instruction-texte').innerText = "";
-                const cote = (10 + (Math.abs(Math.sin(nextLaunch)) * 10)).toFixed(2);
+                
+                const cote = (10 + (Math.abs(Math.sin(nextLaunchSec)) * 10)).toFixed(2);
                 document.getElementById('valeur-principale').innerText = cote + "x";
             }
             
