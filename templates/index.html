@@ -22,6 +22,10 @@
         .g172 { background-image: url("{{ url_for('static', filename='IMG_0172.WEBP') }}"); }
         .g173 { background-image: url("{{ url_for('static', filename='IMG_0173.WEBP') }}"); }
         
+        .g3934 { background-image: url("{{ url_for('static', filename='IMG_3934.jpeg') }}"); }
+        .g3935 { background-image: url("{{ url_for('static', filename='IMG_3935.jpeg') }}"); }
+        .g3936 { background-image: url("{{ url_for('static', filename='IMG_3936.jpeg') }}"); }
+        
         #interface-signal { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; margin-top: 20px; }
         
         .result-container { 
@@ -29,14 +33,21 @@
             background-size: cover; background-position: center; 
             background-color: rgba(28, 31, 38, 0.9); background-blend-mode: overlay;
         }
+
+        .result-container.g3934 { border-color: #ffd700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.35); }
+        .result-container.g3935 { border-color: #00e5ff; box-shadow: 0 0 20px rgba(0, 229, 255, 0.35); }
+        .result-container.g3936 { border-color: #e040fb; box-shadow: 0 0 20px rgba(224, 64, 251, 0.35); }
         
         .cote-label { color: #888; font-size: 14px; }
-        .cote-value { color: #00ffcc; font-size: 32px; font-weight: bold; margin: 10px 0; }
+        .cote-value { color: #00ffcc; font-size: 28px; font-weight: bold; margin: 10px 0; }
         
         .fiabilite-text { font-size: 14px; font-weight: bold; }
         .fiabilite-haute { color: #00ffcc; }
-        .fiabilite-basse { color: #ff3366; }
         
+        .mines-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 240px; margin: 15px auto; }
+        .mine-cell { aspect-ratio: 1 / 1; background-color: #1a1e29; border: 1px solid #333; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .mine-cell.active { background-color: #00ffcc22; border-color: #00ffcc; box-shadow: 0 0 10px #00ffcc44; }
+
         .btn-action { background: #00ffcc; color: #0e1015; border: none; padding: 15px; border-radius: 30px; font-weight: bold; width: 90%; margin-bottom: 10px; cursor: pointer; }
         .btn-back { background: #e0e0e0; color: #333; border: none; padding: 15px; border-radius: 30px; font-weight: bold; width: 90%; cursor: pointer; }
     </style>
@@ -55,15 +66,23 @@
             <div class="game-card g171" onclick="ouvrirJeu('Empire Crime', 'g171')">Empire Crime</div>
             <div class="game-card g172" onclick="ouvrirJeu('Astronaut', 'g172')">Astronaut</div>
             <div class="game-card g173" onclick="ouvrirJeu('Aviator', 'g173')">Aviator</div>
+            <div class="game-card g3934" onclick="ouvrirJeu('Mines Classic', 'g3934')">Mines Classic</div>
+            <div class="game-card g3935" onclick="ouvrirJeu('Mines', 'g3935')">Mines</div>
+            <div class="game-card g3936" onclick="ouvrirJeu('Mines BB', 'g3936')">Mines BB</div>
         </div>
     </div>
 
     <div id="interface-signal">
         <h2 id="nom-jeu"></h2>
         <div class="result-container" id="res-box">
-            <div class="cote-label">Cote cible</div>
-            <div id="cote-cible" class="cote-value">-</div>
-            <div id="heure-affichage" style="font-size: 14px; color: #ccc;"></div>
+            <div class="cote-label" id="label-resultat">Cote cible</div>
+            <div id="valeur-principale" class="cote-value">-</div>
+            <div id="heure-affichage" style="font-size: 14px; color: #ccc; margin-bottom:10px;"></div>
+            
+            <div id="mines-view" style="display: none;">
+                <div class="mines-grid" id="minesGridContainer"></div>
+            </div>
+
             <div id="fiabilite-affichage" class="fiabilite-text"></div>
         </div>
         <button class="btn-action" onclick="lancerCalcul()">DEMANDER SIGNAL</button>
@@ -75,15 +94,18 @@
         tg.ready();
         
         const gameConfigs = {
-            "Lucky Jet": {"cycle": 3, "secondes": "50", "fiabilite": 1.5, "start": [0, 0]},
-            "Rocket Queen": {"cycle": 4, "secondes": "50", "fiabilite": 2, "start": [0, 0]},
-            "1win Crash": {"cycle": 5, "secondes": "00", "fiabilite": 2, "start": [0, 0]},
-            "Tropicana": {"cycle": 5, "secondes": "51", "fiabilite": 1.5, "start": [0, 0]},
-            "Fortune Crash": {"cycle": 5, "secondes": "50", "fiabilite": 2, "start": [0, 0]},
-            "Meta Crash": {"cycle": 7, "secondes": "50", "fiabilite": 2, "start": [0, 0]},
-            "Empire Crime": {"cycle": 8, "secondes": "53", "fiabilite": 2, "start": [0, 0]},
-            "Astronaut": {"cycle": 6, "secondes": "49", "fiabilite": 2, "start": [0, 0]},
-            "Aviator": {"cycle": 3, "secondes": "20", "fiabilite": 1.5, "start": [0, 0]}
+            "Lucky Jet": {"type": "crash", "cycle": 3, "start": [0, 0], "fiabilite": 1.5},
+            "Rocket Queen": {"type": "crash", "cycle": 4, "start": [0, 0], "fiabilite": 2},
+            "1win Crash": {"type": "crash", "cycle": 5, "start": [0, 0], "fiabilite": 2},
+            "Tropicana": {"type": "crash", "cycle": 5, "start": [0, 0], "fiabilite": 1.5},
+            "Fortune Crash": {"type": "crash", "cycle": 5, "start": [0, 0], "fiabilite": 2},
+            "Meta Crash": {"type": "crash", "cycle": 7, "start": [0, 0], "fiabilite": 2},
+            "Empire Crime": {"type": "crash", "cycle": 8, "start": [0, 0], "fiabilite": 2},
+            "Astronaut": {"type": "crash", "cycle": 6, "start": [0, 0], "fiabilite": 2},
+            "Aviator": {"type": "crash", "cycle": 3, "start": [0, 0], "fiabilite": 1.5},
+            "Mines Classic": {"type": "mines", "cycle": 5, "start": [0, 0], "nbEtoiles": 5, "fiabilite": 1.9},
+            "Mines": {"type": "mines", "cycle": 4, "start": [0, 0], "nbEtoiles": 7, "fiabilite": 2.0},
+            "Mines BB": {"type": "mines", "cycle": 6, "start": [0, 0], "nbEtoiles": 6, "fiabilite": 1.8}
         };
 
         let jeuActuel = "";
@@ -94,6 +116,8 @@
             document.getElementById('interface-signal').style.display = 'flex';
             document.getElementById('nom-jeu').innerText = nom;
             document.getElementById('res-box').className = 'result-container ' + classe;
+            document.getElementById('mines-view').style.display = (gameConfigs[nom].type === 'mines') ? 'block' : 'none';
+            document.getElementById('label-resultat').innerText = (gameConfigs[nom].type === 'mines') ? 'Signal Mines' : 'Cote cible';
         }
 
         function fermerJeu() {
@@ -102,32 +126,45 @@
         }
 
         function lancerCalcul() {
-            const res = document.getElementById('cote-cible');
-            const fiabEl = document.getElementById('fiabilite-affichage');
             const conf = gameConfigs[jeuActuel];
-            
             tg.HapticFeedback.impactOccurred('medium');
-            res.innerText = "Calcul...";
 
-            setTimeout(() => {
-                const now = new Date();
-                const startTimeMinutes = conf.start[0] * 60 + conf.start[1];
-                const nowMinutes = now.getHours() * 60 + now.getMinutes();
-                const elapsed = Math.max(0, nowMinutes - startTimeMinutes);
-                
-                const creneau = startTimeMinutes + Math.ceil((elapsed + 1) / conf.cycle) * conf.cycle;
-                
-                const h = Math.floor(creneau / 60) % 24;
-                const m = creneau % 60;
-                const cote = (10 + (Math.abs(Math.sin(creneau)) * 10)).toFixed(2);
-                
-                res.innerText = cote + "x";
-                document.getElementById('heure-affichage').innerText = "Début: " + 
-                    h.toString().padStart(2, '0') + ":" + m.toString().padStart(2, '0') + ":" + conf.secondes;
-                
-                fiabEl.innerText = "Fiabilité: " + conf.fiabilite;
-                fiabEl.className = 'fiabilite-text ' + (conf.fiabilite >= 2 ? 'fiabilite-haute' : 'fiabilite-basse');
-            }, 1000);
+            const now = new Date();
+            const startMins = conf.start[0] * 60 + conf.start[1];
+            const nowMins = now.getHours() * 60 + now.getMinutes();
+            const elapsed = Math.max(0, nowMins - startMins);
+            const nextLaunch = startMins + Math.ceil((elapsed + 1) / conf.cycle) * conf.cycle;
+            
+            const h = Math.floor(nextLaunch / 60) % 24;
+            const m = nextLaunch % 60;
+            const timeStr = h.toString().padStart(2, '0') + ":" + m.toString().padStart(2, '0');
+            
+            document.getElementById('heure-affichage').innerText = "Prochain signal : " + timeStr;
+
+            if (conf.type === 'mines') {
+                const container = document.getElementById('minesGridContainer');
+                container.innerHTML = '';
+                for (let i = 0; i < 25; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'mine-cell';
+                    container.appendChild(cell);
+                }
+                let gagnees = [];
+                while(gagnees.length < conf.nbEtoiles) {
+                    let r = Math.floor(Math.random() * 25);
+                    if(!gagnees.includes(r)) gagnees.push(r);
+                }
+                gagnees.forEach(index => {
+                    container.children[index].className = 'mine-cell active';
+                    container.children[index].innerText = '⭐';
+                });
+                document.getElementById('valeur-principale').innerText = "PRÊT";
+            } else {
+                const cote = (10 + (Math.abs(Math.sin(nextLaunch)) * 10)).toFixed(2);
+                document.getElementById('valeur-principale').innerText = cote + "x";
+            }
+            
+            document.getElementById('fiabilite-affichage').innerText = "Fiabilité : " + conf.fiabilite + "x";
         }
     </script>
 </body>
