@@ -33,16 +33,11 @@
             background-size: cover; background-position: center; 
             background-color: rgba(28, 31, 38, 0.9); background-blend-mode: overlay;
         }
-
-        .result-container.g3934 { border-color: #ffd700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.35); }
-        .result-container.g3935 { border-color: #00e5ff; box-shadow: 0 0 20px rgba(0, 229, 255, 0.35); }
-        .result-container.g3936 { border-color: #e040fb; box-shadow: 0 0 20px rgba(224, 64, 251, 0.35); }
         
         .cote-label { color: #888; font-size: 14px; }
         .cote-value { color: #00ffcc; font-size: 28px; font-weight: bold; margin: 10px 0; }
         
-        .fiabilite-text { font-size: 14px; font-weight: bold; }
-        .fiabilite-haute { color: #00ffcc; }
+        .instruction-box { font-size: 13px; color: #ffcc00; margin: 10px 0; font-weight: bold; line-height: 1.4; }
         
         .mines-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 240px; margin: 15px auto; }
         .mine-cell { aspect-ratio: 1 / 1; background-color: #1a1e29; border: 1px solid #333; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
@@ -77,13 +72,15 @@
         <div class="result-container" id="res-box">
             <div class="cote-label" id="label-resultat">Cote cible</div>
             <div id="valeur-principale" class="cote-value">-</div>
-            <div id="heure-affichage" style="font-size: 14px; color: #ccc; margin-bottom:10px;"></div>
+            
+            <div id="info-lancer" style="font-size: 14px; color: #ccc;"></div>
+            <div id="instruction-texte" class="instruction-box"></div>
             
             <div id="mines-view" style="display: none;">
                 <div class="mines-grid" id="minesGridContainer"></div>
             </div>
 
-            <div id="fiabilite-affichage" class="fiabilite-text"></div>
+            <div id="fiabilite-affichage" style="font-size: 13px; color: #00ffcc; margin-top:5px; font-weight: bold;"></div>
         </div>
         <button class="btn-action" onclick="lancerCalcul()">DEMANDER SIGNAL</button>
         <button class="btn-back" onclick="fermerJeu()">RETOUR</button>
@@ -103,7 +100,6 @@
             "Empire Crime": {"type": "crash", "cycle": 8, "start": [0, 0], "fiabilite": "2.0x"},
             "Astronaut": {"type": "crash", "cycle": 6, "start": [0, 0], "fiabilite": "2.0x"},
             "Aviator": {"type": "crash", "cycle": 3, "start": [0, 0], "fiabilite": "1.5x"},
-            // Nouveaux jeux de mines avec fiabilité en pourcentage (80% à 95%)
             "Mines Classic": {"type": "mines", "cycle": 5, "start": [0, 0], "nbEtoiles": 5, "fiabilite": "89%"},
             "Mines": {"type": "mines", "cycle": 4, "start": [0, 0], "nbEtoiles": 7, "fiabilite": "94%"},
             "Mines BB": {"type": "mines", "cycle": 6, "start": [0, 0], "nbEtoiles": 6, "fiabilite": "91%"}
@@ -145,9 +141,10 @@
             const m = nextLaunch % 60;
             const timeStr = h.toString().padStart(2, '0') + ":" + m.toString().padStart(2, '0');
             
-            document.getElementById('heure-affichage').innerText = "Prochain signal : " + timeStr;
+            document.getElementById('info-lancer').innerText = "Lancer à : " + timeStr;
 
             if (conf.type === 'mines') {
+                document.getElementById('instruction-texte').innerText = "Piège sur 3, essayer 3 fois dans la minute en cas de perte.";
                 const container = document.getElementById('minesGridContainer');
                 container.innerHTML = '';
                 for (let i = 0; i < 25; i++) {
@@ -169,6 +166,7 @@
                 });
                 document.getElementById('valeur-principale').innerText = "PRÊT";
             } else {
+                document.getElementById('instruction-texte').innerText = "";
                 const cote = (10 + (Math.abs(Math.sin(nextLaunch)) * 10)).toFixed(2);
                 document.getElementById('valeur-principale').innerText = cote + "x";
             }
