@@ -21,6 +21,7 @@
         .g171 { background-image: url("{{ url_for('static', filename='IMG_0171.WEBP') }}"); }
         .g172 { background-image: url("{{ url_for('static', filename='IMG_0172.WEBP') }}"); }
         .g173 { background-image: url("{{ url_for('static', filename='IMG_0173.WEBP') }}"); }
+        .g174 { background-image: url("{{ url_for('static', filename='IMG_0174.WEBP') }}"); }
         
         .g3934 { background-image: url("{{ url_for('static', filename='IMG_3934.jpeg') }}"); }
         .g3935 { background-image: url("{{ url_for('static', filename='IMG_3935.jpeg') }}"); }
@@ -33,7 +34,44 @@
             background-size: cover; background-position: center; 
             background-color: rgba(28, 31, 38, 0.9); background-blend-mode: overlay;
         }
-        
+
+        /* --- STYLE DU CERCLE LUMINEUX (JETX) --- */
+        .cercle-radar {
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+            border-radius: 50%;
+            border: 3px solid #333;
+            background: rgba(20, 25, 35, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .cercle-radar.illumine {
+            border-color: #00ffcc;
+            box-shadow: 0 0 25px #00ffcc, inset 0 0 15px #00ffcc;
+        }
+
+        .cercle-heure {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .cercle-cote {
+            font-size: 14px;
+            font-weight: bold;
+            color: #00ffcc;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        --------------------------------------
+
         .cote-label { color: #888; font-size: 14px; }
         .cote-value { color: #00ffcc; font-size: 28px; font-weight: bold; margin: 10px 0; }
         
@@ -61,6 +99,7 @@
             <div class="game-card g171" onclick="ouvrirJeu('Empire Crime', 'g171')">Empire Crime</div>
             <div class="game-card g172" onclick="ouvrirJeu('Astronaut', 'g172')">Astronaut</div>
             <div class="game-card g173" onclick="ouvrirJeu('Aviator', 'g173')">Aviator</div>
+            <div class="game-card g174" onclick="ouvrirJeu('JetX', 'g174')">JetX</div>
             <div class="game-card g3934" onclick="ouvrirJeu('Mines BB', 'g3934')">Mines BB</div>
             <div class="game-card g3935" onclick="ouvrirJeu('Mines', 'g3935')">Mines</div>
             <div class="game-card g3936" onclick="ouvrirJeu('Mines Classic', 'g3936')">Mines Classic</div>
@@ -70,10 +109,22 @@
     <div id="interface-signal">
         <h2 id="nom-jeu"></h2>
         <div class="result-container" id="res-box">
-            <div class="cote-label" id="label-resultat">Cote cible</div>
-            <div id="valeur-principale" class="cote-value">-</div>
             
-            <div id="info-lancer" style="font-size: 14px; color: #ccc;"></div>
+            <!-- Affichage Standard (Autres jeux) -->
+            <div id="standard-view">
+                <div class="cote-label" id="label-resultat">Cote cible</div>
+                <div id="valeur-principale" class="cote-value">-</div>
+                <div id="info-lancer" style="font-size: 14px; color: #ccc;"></div>
+            </div>
+
+            <!-- Cercle Lumineux (JetX) -->
+            <div id="jetx-cercle-view" style="display: none;">
+                <div class="cercle-radar" id="cercleRadar">
+                    <div class="cercle-heure" id="cercleHeureVal">--:--:--</div>
+                    <div class="cercle-cote" id="cercleCoteVal">COTE --</div>
+                </div>
+            </div>
+            
             <div id="instruction-texte" class="instruction-box"></div>
             
             <div id="mines-view" style="display: none;">
@@ -91,7 +142,7 @@
         tg.ready();
         
         const gameConfigs = {
-            "Lucky Jet": {"type": "crash", "cycle": 3, "sec": 50, "start": [0, 0], "fiabilite": "1.5x"},
+            "Lucky Jet": {"type": "crash", "cycle": 3, "sec": 15, "start": [0, 0], "fiabilite": "1.5x"},
             "Rocket Queen": {"type": "crash", "cycle": 4, "sec": 45, "start": [0, 0], "fiabilite": "2.0x"},
             "1win Crash": {"type": "crash", "cycle": 5, "sec": 10, "start": [0, 0], "fiabilite": "2.0x"},
             "Tropicana": {"type": "crash", "cycle": 5, "sec": 20, "start": [0, 0], "fiabilite": "1.5x"},
@@ -99,10 +150,11 @@
             "Meta Crash": {"type": "crash", "cycle": 7, "sec": 0, "start": [0, 0], "fiabilite": "2.0x"},
             "Empire Crime": {"type": "crash", "cycle": 8, "sec": 50, "start": [0, 0], "fiabilite": "2.0x"},
             "Astronaut": {"type": "crash", "cycle": 6, "sec": 5, "start": [0, 0], "fiabilite": "2.0x"},
-            "Aviator": {"type": "crash", "cycle": 3, "sec": 30, "start": [0, 0], "fiabilite": "1.5x"}, // Aviator configuré à 30 secondes fixes
+            "Aviator": {"type": "crash", "cycle": 3, "sec": 30, "start": [0, 0], "fiabilite": "1.5x"},
+            "JetX": {"type": "jetx_cercle", "cycle": 4, "sec": 20, "start": [0, 0], "fiabilite": "96%"},
             
             "Mines BB": {"type": "mines", "cycle": 3, "start": [0, 0], "nbEtoiles": 6, "fiabilite": "91%"},
-            "Mines": {"type": "mines", "cycle": 5, "start": [0, 0], "nbEtoiles": 5, "fiabilite": "94%"},
+            "Mines": {"type": "mines", "cycle": 5, "start": [0, 0], "nbEtoiles": 7, "fiabilite": "94%"},
             "Mines Classic": {"type": "mines", "cycle": 4, "start": [0, 0], "nbEtoiles": 5, "fiabilite": "89%"}
         };
 
@@ -114,8 +166,19 @@
             document.getElementById('interface-signal').style.display = 'flex';
             document.getElementById('nom-jeu').innerText = nom;
             document.getElementById('res-box').className = 'result-container ' + classe;
-            document.getElementById('mines-view').style.display = (gameConfigs[nom].type === 'mines') ? 'block' : 'none';
-            document.getElementById('label-resultat').innerText = (gameConfigs[nom].type === 'mines') ? 'Signal Mines' : 'Cote cible';
+
+            const isJetX = (nom === 'JetX');
+            const isMines = (gameConfigs[nom].type === 'mines');
+
+            document.getElementById('standard-view').style.display = isJetX || isMines ? 'none' : 'block';
+            document.getElementById('jetx-cercle-view').style.display = isJetX ? 'block' : 'none';
+            document.getElementById('mines-view').style.display = isMines ? 'block' : 'none';
+
+            if(isJetX) {
+                document.getElementById('cercleRadar').classList.remove('illumine');
+                document.getElementById('cercleHeureVal').innerText = "--:--:--";
+                document.getElementById('cercleCoteVal').innerText = "COTE --";
+            }
         }
 
         function fermerJeu() {
@@ -167,8 +230,31 @@
                     container.children[index].innerText = '⭐';
                 });
                 document.getElementById('valeur-principale').innerText = "PRÊT";
-            } else {
-                // Anciens jeux (Crash) avec les secondes fixes configurées (ex: conf.sec)
+            } 
+            else if (conf.type === 'jetx_cercle') {
+                const totalSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + conf.sec;
+                const cycleSec = conf.cycle * 60;
+                const nextLaunchSec = Math.ceil((totalSeconds + 1) / cycleSec) * cycleSec;
+                
+                const h = Math.floor(nextLaunchSec / 3600) % 24;
+                const m = Math.floor((nextLaunchSec % 3600) / 60);
+                const s = conf.sec;
+                
+                const timeStr = h.toString().padStart(2, '0') + ":" + m.toString().padStart(2, '0') + ":" + s.toString().padStart(2, '0');
+                
+                let randMin = Math.floor(pseudoRandom(nextLaunchSec) * 5) + 2; 
+                let randMax = randMin + Math.floor(pseudoRandom(nextLaunchSec + 1) * 10) + 3; 
+                if(randMax > 20) randMax = 20;
+
+                document.getElementById('cercleHeureVal').innerText = timeStr;
+                document.getElementById('cercleCoteVal').innerText = "COTE " + randMin + " À " + randMax;
+                
+                const cercle = document.getElementById('cercleRadar');
+                cercle.classList.add('illumine');
+
+                document.getElementById('instruction-texte').innerText = "⚡ Signal validé pour ce tour !";
+            }
+            else {
                 const totalSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + conf.sec;
                 const cycleSec = conf.cycle * 60;
                 const nextLaunchSec = Math.ceil((totalSeconds + 1) / cycleSec) * cycleSec;
@@ -186,7 +272,7 @@
                 document.getElementById('valeur-principale').innerText = cote + "x";
             }
             
-            document.getElementById('fiabilite-affichage').innerText = "Fiabilité : " + conf.fiabilite;
+            document.getElementById('fiabilite-affichage').innerText = "Indice de fiabilité : " + conf.fiabilite;
         }
     </script>
 </body>
