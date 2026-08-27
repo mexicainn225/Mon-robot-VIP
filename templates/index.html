@@ -64,13 +64,12 @@
         }
 
         .cercle-cote {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
             color: #00ffcc;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
-        --------------------------------------
 
         .cote-label { color: #888; font-size: 14px; }
         .cote-value { color: #00ffcc; font-size: 28px; font-weight: bold; margin: 10px 0; }
@@ -151,7 +150,7 @@
             "Empire Crime": {"type": "crash", "cycle": 8, "sec": 50, "start": [0, 0], "fiabilite": "2.0x"},
             "Astronaut": {"type": "crash", "cycle": 6, "sec": 5, "start": [0, 0], "fiabilite": "2.0x"},
             "Aviator": {"type": "crash", "cycle": 3, "sec": 30, "start": [0, 0], "fiabilite": "1.5x"},
-            "JetX": {"type": "jetx_cercle", "cycle": 4, "sec": 20, "start": [0, 0], "fiabilite": "96%"},
+            "JetX": {"type": "jetx_cercle", "cycle": 4, "sec": 20, "start": [0, 1], "fiabilite": "96%"},
             
             "Mines BB": {"type": "mines", "cycle": 3, "start": [0, 0], "nbEtoiles": 6, "fiabilite": "91%"},
             "Mines": {"type": "mines", "cycle": 5, "start": [0, 0], "nbEtoiles": 7, "fiabilite": "94%"},
@@ -242,12 +241,13 @@
                 
                 const timeStr = h.toString().padStart(2, '0') + ":" + m.toString().padStart(2, '0') + ":" + s.toString().padStart(2, '0');
                 
-                let randMin = Math.floor(pseudoRandom(nextLaunchSec) * 5) + 2; 
-                let randMax = randMin + Math.floor(pseudoRandom(nextLaunchSec + 1) * 10) + 3; 
-                if(randMax > 20) randMax = 20;
+                // Première cote aléatoire entre 2 et 3 (avec 2 décimales)
+                let minCote = (2 + pseudoRandom(nextLaunchSec) * 1).toFixed(2);
+                // Deuxième cote aléatoire entre 5 et 20 (avec 2 décimales)
+                let maxCote = (5 + pseudoRandom(nextLaunchSec + 1) * 15).toFixed(2);
 
                 document.getElementById('cercleHeureVal').innerText = timeStr;
-                document.getElementById('cercleCoteVal').innerText = "COTE " + randMin + " À " + randMax;
+                document.getElementById('cercleCoteVal').innerText = "COTE " + minCote + " À " + maxCote;
                 
                 const cercle = document.getElementById('cercleRadar');
                 cercle.classList.add('illumine');
