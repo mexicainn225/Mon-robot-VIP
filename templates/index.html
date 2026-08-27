@@ -150,7 +150,7 @@
             "Empire Crime": {"type": "crash", "cycle": 8, "sec": 50, "start": [0, 0], "fiabilite": "2.0x"},
             "Astronaut": {"type": "crash", "cycle": 6, "sec": 5, "start": [0, 0], "fiabilite": "2.0x"},
             "Aviator": {"type": "crash", "cycle": 3, "sec": 30, "start": [0, 0], "fiabilite": "1.5x"},
-            "JetX": {"type": "jetx_cercle", "cycle": 4, "sec": 20, "start": [0,1], "fiabilite": "96%"},
+            "JetX": {"type": "jetx_cercle", "cycle": 4, "sec": 20, "start": [0, 1], "fiabilite": "96%"},
             
             "Mines BB": {"type": "mines", "cycle": 3, "start": [0, 0], "nbEtoiles": 6, "fiabilite": "91%"},
             "Mines": {"type": "mines", "cycle": 5, "start": [0, 0], "nbEtoiles": 7, "fiabilite": "94%"},
@@ -231,20 +231,20 @@
                 document.getElementById('valeur-principale').innerText = "PRÊT";
             } 
             else if (conf.type === 'jetx_cercle') {
-                const totalSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + conf.sec;
-                const cycleSec = conf.cycle * 60;
-                const nextLaunchSec = Math.ceil((totalSeconds + 1) / cycleSec) * cycleSec;
+                const startMins = conf.start[0] * 60 + conf.start[1];
+                const nowMins = now.getHours() * 60 + now.getMinutes();
+                const elapsed = Math.max(0, nowMins - startMins);
+                const nextLaunchMins = startMins + Math.ceil((elapsed + 1) / conf.cycle) * conf.cycle;
                 
-                const h = Math.floor(nextLaunchSec / 3600) % 24;
-                const m = Math.floor((nextLaunchSec % 3600) / 60);
+                const h = Math.floor(nextLaunchMins / 60) % 24;
+                const m = nextLaunchMins % 60;
                 const s = conf.sec;
                 
                 const timeStr = h.toString().padStart(2, '0') + ":" + m.toString().padStart(2, '0') + ":" + s.toString().padStart(2, '0');
                 
-                // Première cote aléatoire entre 2 et 3 (avec 2 décimales)
-                let minCote = (2 + pseudoRandom(nextLaunchSec) * 1).toFixed(2);
-                // Deuxième cote aléatoire entre 5 et 20 (avec 2 décimales)
-                let maxCote = (5 + pseudoRandom(nextLaunchSec + 1) * 15).toFixed(2);
+                const seedVal = (h * 3600) + (m * 60) + s;
+                let minCote = (2 + pseudoRandom(seedVal) * 1).toFixed(2);
+                let maxCote = (5 + pseudoRandom(seedVal + 1) * 15).toFixed(2);
 
                 document.getElementById('cercleHeureVal').innerText = timeStr;
                 document.getElementById('cercleCoteVal').innerText = "COTE " + minCote + " À " + maxCote;
