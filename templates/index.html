@@ -109,14 +109,12 @@
         <h2 id="nom-jeu"></h2>
         <div class="result-container" id="res-box">
             
-            <!-- Affichage Standard (Autres jeux) -->
             <div id="standard-view">
                 <div class="cote-label" id="label-resultat">Cote cible</div>
                 <div id="valeur-principale" class="cote-value">-</div>
                 <div id="info-lancer" style="font-size: 14px; color: #ccc;"></div>
             </div>
 
-            <!-- Cercle Lumineux (JetX) -->
             <div id="jetx-cercle-view" style="display: none;">
                 <div class="cercle-radar" id="cercleRadar">
                     <div class="cercle-heure" id="cercleHeureVal">--:--:--</div>
@@ -127,6 +125,7 @@
             <div id="instruction-texte" class="instruction-box"></div>
             
             <div id="mines-view" style="display: none;">
+                <div id="mines-heure-lancer" style="font-size: 15px; font-weight: bold; color: #00ffcc; margin-bottom: 10px;">Lancer à : --:--</div>
                 <div class="mines-grid" id="minesGridContainer"></div>
             </div>
 
@@ -178,6 +177,9 @@
                 document.getElementById('cercleHeureVal').innerText = "--:--:--";
                 document.getElementById('cercleCoteVal').innerText = "COTE --";
             }
+            if(isMines) {
+                document.getElementById('mines-heure-lancer').innerText = "Lancer à : --:--";
+            }
         }
 
         function fermerJeu() {
@@ -206,7 +208,7 @@
                 const m = nextLaunch % 60;
                 const timeStr = h.toString().padStart(2, '0') + ":" + m.toString().padStart(2, '0');
                 
-                document.getElementById('info-lancer').innerText = "Lancer à : " + timeStr;
+                document.getElementById('mines-heure-lancer').innerText = "Lancer à : " + timeStr;
                 document.getElementById('instruction-texte').innerText = "Piège sur 3, essayer 3 fois dans la minute en cas de perte.";
                 
                 const container = document.getElementById('minesGridContainer');
@@ -228,7 +230,6 @@
                     container.children[index].className = 'mine-cell active';
                     container.children[index].innerText = '⭐';
                 });
-                document.getElementById('valeur-principale').innerText = "PRÊT";
             } 
             else if (conf.type === 'jetx_cercle') {
                 const startMins = conf.start[0] * 60 + conf.start[1];
