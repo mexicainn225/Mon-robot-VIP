@@ -141,7 +141,6 @@
             "Meta Crash": {"type": "jetx_cercle", "cycle": 7, "sec": 0, "start": [0, 0], "fiabilite": "2.0x"},
             "Empire Crime": {"type": "jetx_cercle", "cycle": 8, "sec": 50, "start": [0, 0], "fiabilite": "2.0x"},
             "Astronaut": {"type": "jetx_cercle", "cycle": 6, "sec": 5, "start": [0, 0], "fiabilite": "2.0x"},
-            // Configuration spécifique pour Aviator avec les minutes cibles demandées
             "Aviator": {"type": "aviator_specifique", "sec": 30, "fiabilite": "1.5x"},
             "JetX": {"type": "jetx_cercle", "cycle": 4, "sec": 20, "start": [0, 1], "fiabilite": "96%"},
             
@@ -225,37 +224,15 @@
                 });
             } 
             else if (conf.type === 'aviator_specifique') {
-                // Logique dédiée pour Aviator avec les minutes cibles exactes
                 const minutesCibles = [0, 8, 10, 18, 20, 28, 30, 38, 40, 48, 50, 58];
-                let currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
                 let currentSecs = now.getSeconds();
                 
-                // Si on est déjà dans la minute cible mais que les secondes ont dépassé les secondes du signal, on passe au suivant
-                let nextTargetTotalMins = -1;
-                
-                for (let h = 0; h < 26; h++) { // Parcourir les heures actuelles et suivantes si besoin
-                    let baseHourMins = h * 60;
-                    // On teste chaque minute cible de la liste
-                    for (let mTarget of minutesCibles) {
-                        let totalCandidate = Math.floor(now.getHours() / 24) * 24 * 60 + (now.getHours() + h) * 60 - (h * 60) + mTarget; // simplifiable mais gère les heures
-                        // Trouvons la prochaine minute absolue supérieure ou égale à maintenant
-                        let totalMinsCandidate = (now.getHours() + Math.floor((now.getMinutes() + (mTarget - now.getMinutes() >= 0 ? 0 : 0)) / 60)) * 60 + mTarget; // Assurons un calcul propre
-                    }
-                }
-
-                // Méthode simple et robuste : parcourir les 120 prochaines minutes pour trouver la première valide
-                let foundH = now.getHours();
-                let foundM = -1;
-                
-                // On convertit l'heure et minute actuelle en valeur numérique
                 let currentAbsoluteMins = now.getHours() * 60 + now.getMinutes();
-                // Si on est exactement sur une minute cible mais que la seconde est déjà passée (> conf.sec), on force à chercher la suivante
                 let exactMatchCurrent = minutesCibles.includes(now.getMinutes());
                 if (exactMatchCurrent && currentSecs >= conf.sec) {
                     currentAbsoluteMins += 1;
                 }
 
-                // Recherche de la prochaine minute valide
                 let targetAbsoluteMins = -1;
                 for (let addM = 0; addM <= 60; addM++) {
                     let testMins = currentAbsoluteMins + addM;
@@ -282,7 +259,7 @@
                 const cercle = document.getElementById('cercleRadar');
                 cercle.classList.add('illumine');
 
-                document.getElementById('instruction-texte').innerText = "⚡ Signal Aviator validé (Minutes spécifiques) !";
+                document.getElementById('instruction-texte').innerText = "⚡ Signal Aviator validé !";
             }
             else if (conf.type === 'jetx_cercle') {
                 const startMins = conf.start[0] * 60 + conf.start[1];
